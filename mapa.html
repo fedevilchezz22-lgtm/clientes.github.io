@@ -1,0 +1,309 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Territorio">
+<meta name="theme-color" content="#14213d"><title>Mapa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0;font:15px/1.35 system-ui,-apple-system,sans-serif;color:#14213d}
+#map{position:fixed;inset:0}
+#leg{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;right:52px;z-index:1000;display:flex;gap:6px;overflow-x:auto}
+.ch{flex:none;display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #cfd5df;border-radius:20px;padding:6px 10px;font-weight:600;box-shadow:0 1px 4px #0003}
+.ch.off{opacity:.4}.ch i,.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px}
+#bar{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);z-index:1002;display:flex;gap:8px}
+#bL{position:fixed;right:8px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:1000;width:44px;padding:0;font-size:20px;background:#fff;box-shadow:0 2px 6px #0004}.leaflet-top{top:env(safe-area-inset-top,0px)}
+#bar button{flex:1;font-size:14px;padding:0 4px;box-shadow:0 2px 6px #0004}
+button,select,input{font:inherit}
+button{min-height:44px;border:0;border-radius:10px;background:#14213d;color:#fff;font-weight:600;padding:0 14px}
+#sheet{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);z-index:1001;background:#fff;border-radius:16px;max-height:58vh;overflow:auto;padding:14px;box-shadow:0 -2px 16px #0005}
+label{display:block;margin:8px 0 2px;font-weight:600}
+input,select{width:100%;min-height:42px;border:1px solid #cfd5df;border-radius:8px;padding:0 10px;background:#fff;color:#14213d}
+.pb{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pb button,.pb a,.pb select{min-height:38px;padding:0 12px;display:grid;place-items:center;border-radius:8px;background:#14213d;color:#fff;text-decoration:none;font-weight:600;width:auto}
+.pb .x{background:#d93a3a}
+.tb{display:flex;gap:6px;margin-bottom:10px}.tb button{flex:1;background:#e8ebf2;color:#14213d;padding:0 4px}.tb .on{background:#14213d;color:#fff}
+.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #e3e7ee}
+.pin{width:32px;height:32px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px #0006;display:grid;place-items:center;font-weight:800;color:#fff}
+.pin.amarillo,.pin.celeste{color:#14213d}
+.zl{background:none;border:0;box-shadow:none;font-weight:700;color:#1d3557;text-shadow:0 0 3px #fff,0 0 3px #fff}.zl:before{display:none}
+.bl{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:12px;font-weight:700;font-style:italic;color:#6b3f00;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.bl.lg{color:#0b3d91;font-style:normal}
+.dl{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:18px;letter-spacing:.12em;color:#111;text-shadow:0 0 4px #fff,0 0 4px #fff;white-space:nowrap;opacity:.8}
+.tb button{font-size:13px}
+#bH{position:fixed;right:8px;top:calc(env(safe-area-inset-top,0px) + 114px);z-index:1000;width:44px;padding:0;font-size:20px;background:#fff;box-shadow:0 2px 6px #0004}
+#hs{position:fixed;left:12px;right:64px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:1001;background:#14213d;color:#fff;padding:8px 12px;border-radius:10px;font-size:14px}
+</style></head><body>
+<div id="map"></div><div id="leg"></div>
+<div id="bar"><button id="bC" style="display:none"></button><button id="bZ">+ Zona</button><button id="bK">+ Camino</button><button id="bP">Panel</button></div>
+<button id="bL">📍</button><button id="bH">🏠</button><div id="hs" hidden></div><div id="sheet" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js"></script>
+<script>
+if(!window.L){document.getElementById('map').innerHTML='<p style="padding:20px">No cargó el mapa. Revisá tu conexión a internet.</p>';throw 0}
+const COL={verde:'#2e9e5b',gris:'#8b92a0',amarillo:'#f2b705',celeste:'#2db7ea',rojo:'#d93a3a',morado:'#8e44ad'};
+const NAME={verde:'Cancelado',gris:'No salió',amarillo:'Pagando',celeste:'Última cuota',rojo:'Moroso',morado:'Dudoso'};
+const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const GRACIA=5,KEY='territorio-sm-v1'; /* GRACIA: días de atraso hasta pasar a rojo */
+let S={c:[],z:[]};try{S=JSON.parse(localStorage.getItem(KEY))||S}catch(e){}S.b=S.b||[];S.r=S.r||[];let CLI=[],HS=null;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('No se pudo guardar en este navegador')}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const P=s=>{const[a,b,c]=s.split('-');return new Date(a,b-1,c)};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const hoy=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
+const dif=(a,b)=>Math.round((b-a)/864e5);
+const fd=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+const dist=(a,b)=>{const r=Math.PI/180,x=(b.lng-a.lng)*r*Math.cos((a.lat+b.lat)/2*r),y=(b.lat-a.lat)*r;return 6371000*Math.hypot(x,y)};
+function addM(s,n){const[a,b,c]=s.split('-').map(Number),t=new Date(a,b-1+n,1),l=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();return new Date(t.getFullYear(),t.getMonth(),Math.min(c,l))}
+function cuM(c){const t=+c.ct;if(!(t>0)||!c.cv)return null;const h=hoy();let paid=0;for(let i=0;i<t;i++)if(addM(c.cv,i)<=h)paid++;return{paid,left:t-paid,total:t,next:paid<t?addM(c.cv,paid):null}}
+/* Color de cada casa: verde cancelado, amarillo pagando, celeste última cuota, rojo moroso, gris no cliente, morado dudoso */
+function calc(c){
+ if(c.mor)return{k:'rojo',cuota:'!'};
+ if(c.t==='dud')return{k:'morado'};
+ if(c.t==='no')return{k:'gris'};
+ const u=c.comp==='si'?cuM(c):null;
+ if(u){if(!u.left)return{k:'verde',cuota:u.total};return{k:u.left===1?'celeste':'amarillo',cuota:u.paid+1,nx:u.next,d:dif(u.next,hoy())}}
+ if(c.t==='c')return{k:'amarillo',cuota:'?'};
+ if(c.t==='cn')return{k:'verde'};
+ return{k:'sin'}}
+function inZ(c,z){let i=false;const p=z.pts;for(let a=0,b=p.length-1;a<p.length;b=a++){if((p[a][0]>c.lat)!==(p[b][0]>c.lat)&&c.lng<(p[b][1]-p[a][1])*(c.lat-p[a][0])/(p[b][0]-p[a][0])+p[a][1])i=!i}return i}
+const lastP=z=>z.p.length?z.p[z.p.length-1]:null;
+const age=z=>lastP(z)?dif(P(lastP(z)),hoy()):null;
+const hace=a=>a===null?'nunca':a===0?'hoy':'hace '+a+' d';
+
+const map=L.map('map',{zoomControl:false}).setView([-33.08,-68.47],12);
+const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap',crossOrigin:true}).addTo(map);
+const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,maxNativeZoom:17,attribution:'Esri',crossOrigin:true});
+L.control.layers({'Mapa':osm,'Satélite':sat}).addTo(map);
+const LC=L.layerGroup().addTo(map),LZ=L.layerGroup().addTo(map),LT=L.layerGroup().addTo(map);
+let mode=null,pts=[],cur=null,pos=null,me=null,dia=Math.max(1,new Date().getDay());
+const hid=new Set();
+const PC={F:'#0a7d3b',M:'#1d3557',D:'#b45309'},ST={F:'★★★ ',M:'★★ ',D:'★ '};
+const NZ=['Alto Salvador','Alto Verde','Buen Orden','Chapanay','Chivilcoy','El Central','El Divisadero','El Espino','El Ramblón','Las Chimbas','Montecaseros','Nueva California','Palmira','Tres Porteñas','Ciudad','Carril San Pedro','Carril Chimbas','Carril Costa Canal Montecaseros','Carril Montecaseros','Carril Zapata','Carril Divisadero','Carril Chivilcoy','Calle Cereceto'];
+const SM=[[-32.8432,-67.9577],[-32.8368,-68.1222],[-32.9983,-68.1246],[-32.9985,-68.1853],[-33.0545,-68.2831],[-33.0986,-68.2843],[-33.1869,-68.2869],[-33.1776,-68.3011],[-33.1631,-68.3253],[-33.1545,-68.3372],[-33.1395,-68.3612],[-33.1318,-68.3768],[-33.1216,-68.3973],[-33.1085,-68.4236],[-33.0976,-68.4478],[-33.0913,-68.4694],[-33.0902,-68.4742],[-33.0866,-68.4903],[-33.1068,-68.5078],[-33.1048,-68.5139],[-33.0945,-68.5276],[-33.0927,-68.5258],[-33.0907,-68.5292],[-33.0897,-68.5322],[-33.0852,-68.5463],[-33.0841,-68.5491],[-33.0775,-68.5596],[-33.0759,-68.558],[-33.0711,-68.5652],[-33.084,-68.577],[-33.0731,-68.5811],[-33.0678,-68.5778],[-33.0656,-68.5799],[-33.0623,-68.5793],[-33.0586,-68.579],[-33.0563,-68.5789],[-33.0527,-68.5776],[-33.0506,-68.5758],[-33.0488,-68.5739],[-33.0471,-68.5721],[-33.0443,-68.5708],[-33.0409,-68.5712],[-33.0369,-68.5717],[-33.0348,-68.5712],[-33.0314,-68.5689],[-33.028,-68.5652],[-33.0244,-68.5642],[-33.02,-68.5622],[-33.018,-68.56],[-33.015,-68.5597],[-33.01,-68.5602],[-33.0065,-68.5568],[-33.0041,-68.5542],[-33.0035,-68.5515],[-32.9972,-68.5481],[-32.9953,-68.5452],[-32.9926,-68.5413],[-32.9907,-68.5403],[-32.9887,-68.5417],[-32.986,-68.5414],[-32.9847,-68.5397],[-32.9829,-68.5378],[-32.981,-68.5365],[-32.9793,-68.5346],[-32.9782,-68.5321],[-32.9766,-68.5291],[-32.9743,-68.5277],[-32.973,-68.5237],[-32.9728,-68.5212],[-32.9696,-68.52],[-32.9682,-68.5163],[-32.9656,-68.5154],[-32.9645,-68.513],[-32.9641,-68.5088],[-32.9624,-68.507],[-32.9603,-68.5066],[-32.958,-68.5066],[-32.9565,-68.5029],[-32.9578,-68.4979],[-32.9559,-68.4935],[-32.9534,-68.4942],[-32.9494,-68.4928],[-32.9471,-68.493],[-32.9437,-68.4933],[-32.9412,-68.4921],[-32.9389,-68.4899],[-32.9381,-68.4862],[-32.9356,-68.4835],[-32.9333,-68.4825],[-32.9314,-68.4818],[-32.9297,-68.4806],[-32.928,-68.4786],[-32.9245,-68.4764],[-32.9224,-68.4737],[-32.9213,-68.471],[-32.9196,-68.4692],[-32.9156,-68.469],[-32.9133,-68.4668],[-32.9117,-68.4651],[-32.9083,-68.4661],[-32.9048,-68.4651],[-32.9025,-68.4619],[-32.9,-68.463],[-32.8968,-68.4637],[-32.8947,-68.461],[-32.8924,-68.46],[-32.8899,-68.4633],[-32.8868,-68.4643],[-32.8849,-68.4635],[-32.8828,-68.4635],[-32.8791,-68.4641],[-32.8778,-68.4591],[-32.8734,-68.4569],[-32.8713,-68.4562],[-32.8675,-68.4552],[-32.8644,-68.4544],[-32.8621,-68.4558],[-32.8609,-68.4585],[-32.8588,-68.4625],[-32.8553,-68.4649],[-32.8515,-68.4645],[-32.8498,-68.4623],[-32.8469,-68.462],[-32.8442,-68.464],[-32.8423,-68.4653],[-32.84,-68.4658],[-32.8381,-68.4646],[-32.8364,-68.4626],[-32.8344,-68.4631],[-32.8323,-68.4634],[-32.831,-68.4589],[-32.8274,-68.4597],[-32.8256,-68.4614],[-32.8231,-68.4609],[-32.8216,-68.4582],[-32.8195,-68.4563],[-32.817,-68.4553],[-32.814,-68.4529],[-32.8124,-68.4509],[-32.8123,-68.4457],[-32.8115,-68.442],[-32.8092,-68.441],[-32.8056,-68.4418],[-32.8027,-68.4436],[-32.8006,-68.4436],[-32.7994,-68.4399],[-32.7996,-68.4377],[-32.8001,-68.4341],[-32.7999,-68.4294],[-32.7995,-68.4272],[-32.798,-68.4249],[-32.7946,-68.4213],[-32.7938,-68.4193],[-32.7934,-68.4164],[-32.7902,-68.4134],[-32.7883,-68.4124],[-32.7883,-68.4092],[-32.7889,-68.4031],[-32.7864,-68.4011],[-32.7829,-68.4031],[-32.7791,-68.4019],[-32.7789,-68.3992],[-32.7801,-68.3975],[-32.7814,-68.3947],[-32.7807,-68.3886],[-32.7797,-68.3864],[-32.7773,-68.3832],[-32.7755,-68.3817],[-32.7731,-68.3795],[-32.7715,-68.378],[-32.77,-68.3763],[-32.7691,-68.3741],[-32.7685,-68.3721],[-32.767,-68.3692],[-32.7656,-68.3653],[-32.7622,-68.3621],[-32.7584,-68.3609],[-32.7563,-68.3577],[-32.7532,-68.3552],[-32.7505,-68.3511],[-32.7492,-68.3484],[-32.7481,-68.3454],[-32.7458,-68.3415],[-32.7429,-68.3408],[-32.7391,-68.3406],[-32.7354,-68.3391],[-32.7318,-68.3359],[-32.7282,-68.3335],[-32.7249,-68.3296],[-32.7208,-68.3282],[-32.7256,-67.9579],[-32.8432,-67.9577]]; /* límite del departamento San Martín (IGN) */
+const JU=[[-33.1869,-68.2869],[-33.2177,-68.2878],[-33.2306,-68.2883],[-33.2234,-68.3285],[-33.2198,-68.3316],[-33.2161,-68.3411],[-33.2124,-68.3411],[-33.2099,-68.3568],[-33.2131,-68.3586],[-33.2071,-68.3786],[-33.2032,-68.3857],[-33.1943,-68.3989],[-33.1874,-68.4071],[-33.1806,-68.4134],[-33.1749,-68.426],[-33.1633,-68.4398],[-33.1612,-68.4475],[-33.1594,-68.4555],[-33.1575,-68.4593],[-33.1543,-68.4658],[-33.1489,-68.4807],[-33.1514,-68.4894],[-33.1504,-68.4925],[-33.1515,-68.5057],[-33.152,-68.5145],[-33.1521,-68.5232],[-33.1532,-68.5364],[-33.1532,-68.5458],[-33.1527,-68.5514],[-33.1569,-68.5589],[-33.1612,-68.5658],[-33.1654,-68.5745],[-33.1676,-68.5758],[-33.1708,-68.5864],[-33.1734,-68.5964],[-33.1735,-68.6071],[-33.1756,-68.6121],[-33.1798,-68.6202],[-33.1836,-68.6284],[-33.1904,-68.6371],[-33.194,-68.6433],[-33.202,-68.6383],[-33.2082,-68.6502],[-33.215,-68.6572],[-33.2158,-68.6593],[-33.2186,-68.6639],[-33.2236,-68.6657],[-33.2262,-68.6687],[-33.231,-68.6717],[-33.2345,-68.6715],[-33.2365,-68.6728],[-33.2429,-68.6789],[-33.2459,-68.6823],[-33.2473,-68.6846],[-33.2436,-68.6843],[-33.241,-68.6834],[-33.2394,-68.6818],[-33.2371,-68.6797],[-33.2341,-68.6775],[-33.2274,-68.6758],[-33.225,-68.6739],[-33.2197,-68.669],[-33.2173,-68.6682],[-33.2155,-68.6661],[-33.2135,-68.6643],[-33.2103,-68.6633],[-33.2081,-68.6619],[-33.2043,-68.6614],[-33.2013,-68.6609],[-33.1982,-68.6591],[-33.196,-68.6586],[-33.194,-68.6575],[-33.1922,-68.6557],[-33.19,-68.6565],[-33.1877,-68.6565],[-33.183,-68.6556],[-33.181,-68.6554],[-33.1778,-68.6552],[-33.1761,-68.6538],[-33.1734,-68.654],[-33.1704,-68.6526],[-33.1665,-68.6518],[-33.1645,-68.6507],[-33.1625,-68.6492],[-33.1608,-68.6481],[-33.1581,-68.6472],[-33.1535,-68.6445],[-33.1502,-68.6442],[-33.1475,-68.6436],[-33.1446,-68.6441],[-33.1432,-68.6425],[-33.1403,-68.6411],[-33.1382,-68.638],[-33.1364,-68.6369],[-33.1342,-68.6344],[-33.1327,-68.6318],[-33.1309,-68.6298],[-33.0964,-68.6188],[-33.0955,-68.6163],[-33.0949,-68.6135],[-33.0947,-68.6101],[-33.0943,-68.6069],[-33.0936,-68.604],[-33.0921,-68.601],[-33.0899,-68.5984],[-33.0867,-68.5964],[-33.0826,-68.5935],[-33.0811,-68.5916],[-33.0796,-68.5901],[-33.0751,-68.5876],[-33.0711,-68.5873],[-33.0672,-68.5871],[-33.0643,-68.5869],[-33.0621,-68.5861],[-33.0589,-68.5846],[-33.0562,-68.5841],[-33.0541,-68.5846],[-33.0495,-68.5851],[-33.0459,-68.5844],[-33.0434,-68.5834],[-33.0414,-68.5818],[-33.0389,-68.5805],[-33.0368,-68.5801],[-33.0344,-68.5792],[-33.0321,-68.5779],[-33.0301,-68.5759],[-33.0289,-68.573],[-33.0287,-68.5703],[-33.028,-68.5652],[-33.0314,-68.5689],[-33.0348,-68.5712],[-33.0369,-68.5717],[-33.0409,-68.5712],[-33.0443,-68.5708],[-33.0471,-68.5721],[-33.0488,-68.5739],[-33.0506,-68.5758],[-33.0527,-68.5776],[-33.0563,-68.5789],[-33.0586,-68.579],[-33.0623,-68.5793],[-33.0656,-68.5799],[-33.0678,-68.5778],[-33.0731,-68.5811],[-33.084,-68.577],[-33.0711,-68.5652],[-33.0759,-68.558],[-33.0775,-68.5596],[-33.0841,-68.5491],[-33.0852,-68.5463],[-33.0897,-68.5322],[-33.0907,-68.5292],[-33.0927,-68.5258],[-33.0945,-68.5276],[-33.1048,-68.5139],[-33.1068,-68.5078],[-33.0866,-68.4903],[-33.0902,-68.4742],[-33.0913,-68.4694],[-33.0976,-68.4478],[-33.1085,-68.4236],[-33.1216,-68.3973],[-33.1318,-68.3768],[-33.1395,-68.3612],[-33.1545,-68.3372],[-33.1631,-68.3253],[-33.1776,-68.3011],[-33.1869,-68.2869]],RI=[[-33.2306,-68.2883],[-33.3318,-68.2893],[-33.351,-68.2865],[-33.3541,-68.2841],[-33.3558,-68.2815],[-33.3576,-68.2805],[-33.3605,-68.2805],[-33.4614,-68.2903],[-33.4863,-68.5935],[-33.7248,-68.571],[-33.5757,-69.0003],[-33.5718,-69.0001],[-33.57,-69.0016],[-33.5687,-69.0035],[-33.5662,-69.0037],[-33.5646,-69.0055],[-33.5623,-69.0056],[-33.5609,-69.004],[-33.5587,-69.006],[-33.5563,-69.0062],[-33.5538,-69.0054],[-33.5513,-69.0058],[-33.5497,-69.0045],[-33.5481,-69.0021],[-33.5461,-69.0004],[-33.5445,-68.9991],[-33.5436,-68.9972],[-33.542,-68.9959],[-33.54,-68.9955],[-33.5393,-68.9974],[-33.5357,-68.9972],[-33.533,-68.9962],[-33.5305,-68.995],[-33.5268,-68.9938],[-33.5233,-68.9931],[-33.5212,-68.9922],[-33.5176,-68.9912],[-33.5136,-68.9909],[-33.5111,-68.9917],[-33.5089,-68.993],[-33.5067,-68.9934],[-33.5044,-68.9929],[-33.5021,-68.9917],[-33.4996,-68.9905],[-33.4977,-68.9877],[-33.4962,-68.9854],[-33.4947,-68.983],[-33.4916,-68.9784],[-33.49,-68.9756],[-33.4884,-68.9732],[-33.4869,-68.9704],[-33.4851,-68.9683],[-33.4836,-68.9655],[-33.4827,-68.9626],[-33.4803,-68.9608],[-33.4786,-68.9588],[-33.4779,-68.9561],[-33.4766,-68.9532],[-33.475,-68.9515],[-33.4739,-68.9494],[-33.4732,-68.9457],[-33.4738,-68.9428],[-33.4731,-68.9398],[-33.469,-68.9384],[-33.4675,-68.9351],[-33.467,-68.9324],[-33.4668,-68.9301],[-33.466,-68.9272],[-33.4647,-68.9239],[-33.4634,-68.9211],[-33.4618,-68.9175],[-33.4607,-68.9155],[-33.4582,-68.912],[-33.4568,-68.91],[-33.4546,-68.9063],[-33.4537,-68.9025],[-33.4534,-68.8997],[-33.4532,-68.8962],[-33.4534,-68.8932],[-33.4532,-68.8892],[-33.4519,-68.8874],[-33.4499,-68.8853],[-33.4474,-68.8832],[-33.4454,-68.8818],[-33.4432,-68.8803],[-33.4396,-68.8767],[-33.4376,-68.8756],[-33.4341,-68.8755],[-33.4299,-68.8745],[-33.4282,-68.8717],[-33.4267,-68.8696],[-33.4235,-68.8666],[-33.4214,-68.8659],[-33.4201,-68.8641],[-33.42,-68.8617],[-33.4192,-68.8588],[-33.4175,-68.8564],[-33.4157,-68.8545],[-33.412,-68.8536],[-33.4104,-68.8523],[-33.4096,-68.8496],[-33.4085,-68.8453],[-33.4068,-68.8437],[-33.4059,-68.8413],[-33.4048,-68.8382],[-33.4038,-68.8352],[-33.4029,-68.8325],[-33.4017,-68.8297],[-33.4008,-68.8275],[-33.3991,-68.8234],[-33.3986,-68.8209],[-33.3971,-68.8188],[-33.3967,-68.8159],[-33.3961,-68.814],[-33.395,-68.8097],[-33.3936,-68.8072],[-33.3925,-68.8042],[-33.391,-68.8001],[-33.3904,-68.7978],[-33.3912,-68.7935],[-33.3918,-68.7907],[-33.3922,-68.7866],[-33.3896,-68.7842],[-33.3874,-68.7831],[-33.3861,-68.7808],[-33.3857,-68.7787],[-33.3846,-68.7758],[-33.3809,-68.775],[-33.3784,-68.7737],[-33.3755,-68.7718],[-33.3718,-68.7704],[-33.3692,-68.768],[-33.3681,-68.7663],[-33.3668,-68.7627],[-33.3648,-68.7598],[-33.3627,-68.7587],[-33.3601,-68.7568],[-33.3591,-68.7538],[-33.3569,-68.7511],[-33.3548,-68.7484],[-33.353,-68.7457],[-33.3518,-68.7436],[-33.35,-68.7409],[-33.3475,-68.7377],[-33.3461,-68.7356],[-33.3441,-68.7336],[-33.3423,-68.7308],[-33.3412,-68.7274],[-33.3389,-68.7257],[-33.335,-68.7259],[-33.3328,-68.7248],[-33.331,-68.7234],[-33.3297,-68.7209],[-33.3278,-68.7192],[-33.3251,-68.7192],[-33.3221,-68.7203],[-33.3189,-68.72],[-33.3161,-68.7216],[-33.3129,-68.7224],[-33.3108,-68.7237],[-33.3063,-68.7275],[-33.2966,-68.7222],[-33.2934,-68.7222],[-33.2918,-68.7203],[-33.2887,-68.7184],[-33.2855,-68.7165],[-33.2839,-68.7146],[-33.2823,-68.7128],[-33.2807,-68.7109],[-33.2775,-68.709],[-33.2759,-68.7109],[-33.2728,-68.709],[-33.268,-68.7053],[-33.2648,-68.7034],[-33.2632,-68.7015],[-33.2632,-68.6958],[-33.2616,-68.6939],[-33.2584,-68.6902],[-33.2553,-68.6883],[-33.2527,-68.6878],[-33.2505,-68.6864],[-33.2473,-68.6846],[-33.2459,-68.6823],[-33.2429,-68.6789],[-33.2365,-68.6728],[-33.2345,-68.6715],[-33.231,-68.6717],[-33.2262,-68.6687],[-33.2236,-68.6657],[-33.2186,-68.6639],[-33.2158,-68.6593],[-33.215,-68.6572],[-33.2082,-68.6502],[-33.202,-68.6383],[-33.194,-68.6433],[-33.1904,-68.6371],[-33.1836,-68.6284],[-33.1798,-68.6202],[-33.1756,-68.6121],[-33.1735,-68.6071],[-33.1734,-68.5964],[-33.1708,-68.5864],[-33.1676,-68.5758],[-33.1654,-68.5745],[-33.1612,-68.5658],[-33.1569,-68.5589],[-33.1527,-68.5514],[-33.1532,-68.5458],[-33.1532,-68.5364],[-33.1521,-68.5232],[-33.152,-68.5145],[-33.1515,-68.5057],[-33.1504,-68.4925],[-33.1514,-68.4894],[-33.1489,-68.4807],[-33.1543,-68.4658],[-33.1575,-68.4593],[-33.1594,-68.4555],[-33.1612,-68.4475],[-33.1633,-68.4398],[-33.1749,-68.426],[-33.1806,-68.4134],[-33.1874,-68.4071],[-33.1943,-68.3989],[-33.2032,-68.3857],[-33.2071,-68.3786],[-33.2131,-68.3586],[-33.2099,-68.3568],[-33.2124,-68.3411],[-33.2161,-68.3411],[-33.2198,-68.3316],[-33.2234,-68.3285],[-33.2306,-68.2883]]; /* límites de Junín y Rivadavia (IGN) */
+const DEP={
+ 'San Martín':{p:SM,d:['Ciudad de San Martín','Palmira','Alto Verde','Alto Salvador','Buen Orden','Chapanay','Tres Porteñas','El Central','El Divisadero','El Espino','El Ramblón','Las Chimbas','Montecaseros','Nueva California','Chivilcoy'],c:['Carril San Pedro','Carril Chimbas (RP 41)','Carril Costa Canal Montecaseros (RP 43)','Carril Montecaseros','Carril Zapata','Carril Divisadero','Carril Chivilcoy','Calle Cereceto','Calle Míguez (RP 63)','Carril Norte','Carril del Centro','Ruta Provincial 50','Ruta Nacional 7']},
+ 'Junín':{p:JU,d:['Ciudad de Junín','La Colonia','Algarrobo Grande','Phillips','Mundo Nuevo','Alto Verde','Ingeniero Giagnoni','Los Barriales','Rodríguez Peña','Medrano'],c:['Carril Centro','Calle Corvalán (San Cayetano)','Carril Alto Verde','Carril Sud Alto Verde','Carril Santos Lugares','Carril Lucero','Carril Viejo Retamo','Calle Coria','Calle Martínez','Carril Caballero (RP 63)','Ruta Provincial 60','Ruta Nacional 7']},
+ 'Rivadavia':{p:RI,d:['Ciudad de Rivadavia','Andrade','El Mirador','La Central','La Libertad','Los Árboles','Los Campamentos','Medrano','Mundo Nuevo','La Reducción','Santa María de Oro'],c:['Ruta Provincial 62 (La Florida)','Ruta Provincial 71','Ruta Provincial 61','Carril Colombo','Calle Galigniana','Carril Almirante Brown','Calle Liniers','Carril Albardón (RP 63)','Barrio Los Olmos','Barrio Tittarelli','Barrio Lencinas','Barrio Almafuerte']}};
+const AB=L.latLngBounds([].concat(SM,JU,RI));
+const dept=p=>{for(const k in DEP)if(inZ(p,{pts:DEP[k].p}))return k;return''};
+L.polygon([[[-85,-180],[-85,180],[85,180],[85,-180]],SM,JU,RI],{stroke:false,fillColor:'#d93a3a',fillOpacity:.32,interactive:false}).addTo(map);
+[SM,JU,RI].forEach(p=>L.polygon(p,{color:'#111',weight:8,opacity:.9,fill:false,interactive:false}).addTo(map));
+const LD=L.layerGroup().addTo(map);
+function drawD(){LD.clearLayers();if(map.getZoom()>12)return;for(const k in DEP)L.marker(L.polygon(DEP[k].p).getBounds().getCenter(),{icon:L.divIcon({className:'',html:'<div class="dl">'+k.toUpperCase()+'</div>',iconSize:[0,0]}),interactive:false}).addTo(LD)}
+map.on('zoomend',drawD);
+
+function render(){
+ LC.clearLayers();LZ.clearLayers();const cnt={};
+ S.z.forEach(z=>{const a=age(z),ag=a===null?999:a,op=Math.max(.05,.5-ag*.0075);
+  L.polygon(z.pts,{color:PC[z.pot]||'#1d3557',weight:3,fillColor:PC[z.pot]||'#1d3557',fillOpacity:op,opacity:Math.max(.35,op+.2),dashArray:ag>45?'6 6':null,interactive:!mode})
+   .bindPopup(()=>popZ(z)).bindTooltip((ST[z.pot]||'')+z.n,{permanent:true,direction:'center',className:'zl'}).addTo(LZ)});
+ S.r.forEach(r=>L.polyline(r.pts,{color:'#d6249f',weight:5,opacity:.9,dashArray:'10 7',interactive:!mode}).bindTooltip(r.n,{sticky:true}).bindPopup(()=>popR(r)).addTo(LZ));
+ CLI.forEach(c=>{if(c.lat==null||!marked(c))return;const r=calc(c);cnt[r.k]=(cnt[r.k]||0)+1;if(hid.has(r.k))return;
+  if(c.poly&&c.poly.length>2)L.polygon(c.poly,{color:'#fff',weight:1.5,fillColor:COL[r.k],fillOpacity:.95,interactive:!mode}).on('click',e=>{L.DomEvent.stopPropagation(e);tellClient(c)}).addTo(LC);
+  if(c.poly&&c.poly.length>2&&map.getZoom()>=18)return;
+  const lab=r.k==='verde'?'✓':r.k==='gris'?'':r.k==='morado'?'?':r.cuota;
+  L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:`<div class="pin ${r.k}" style="background:${COL[r.k]}">${lab}</div>`,iconSize:[32,32],iconAnchor:[16,16]})})
+   .on('click',e=>{L.DomEvent.stopPropagation(e);tellClient(c)}).addTo(LC)});
+ $('leg').innerHTML=Object.keys(COL).map(k=>`<div class="ch ${hid.has(k)?'off':''}" onclick="tg('${k}')"><i style="background:${COL[k]}"></i>${NAME[k]} ${cnt[k]||0}</div>`).join('')}
+function tg(k){hid.has(k)?hid.delete(k):hid.add(k);render()}
+
+const sh=h=>{$('sheet').innerHTML=h;$('sheet').hidden=false};
+function cerrar(){$('sheet').hidden=true;mode=null;pts=[];LT.clearLayers();render()}
+
+function popC(c){const r=calc(c);let s=`<b>${esc(c.n)||'Sin nombre'}</b><br>`;
+ if(r.k==='gris')s+='No salió / no es cliente';else if(r.k==='morado')s+='Dudoso: dijo "soy cliente, pero por ahora no"';
+ else if(r.k==='verde')s+=`Cancelado (${c.tot} cuotas pagas)`;
+ else s+=`Cuota ${r.cuota}/${c.tot} · vence ${fd(r.nx)} `+(r.d>0?`<br><b style="color:#d93a3a">Atrasado ${r.d} días</b>`:r.d===0?'(hoy)':`(en ${-r.d} días)`);
+ if(c.tel)s+=`<br><a href="tel:${esc(c.tel)}">${esc(c.tel)}</a>`;
+ if(c.nota)s+=`<br>${esc(c.nota)}`;
+ return s+`<div class="pb">${['gris','verde','morado'].includes(r.k)?'':`<button onclick="pay('${c.id}')">Pagó cuota</button>`}<button onclick="editC('${c.id}')">Editar</button><a href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}" target="_blank">Ir</a><button class="x" onclick="delC('${c.id}')">Borrar</button></div>`}
+function popZ(z){const a=age(z);return `<b>${esc(z.n)}</b><br>Último paso: ${hace(a)} · ${z.p.length} pasadas<div class="pb"><button onclick="paso('${z.id}')">Pasé hoy</button><select onchange="diaZ('${z.id}',this.value)">${DIAS.map((d,i)=>`<option value="${i}"${z.dia===''+i?' selected':''}>${i?d:'Sin día'}</option>`).join('')}</select><select onchange="potZ('${z.id}',this.value)">${[['','Potencial'],['F','Fuerte'],['M','Media'],['D','Difícil']].map(o=>`<option value="${o[0]}"${(z.pot||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select><button class="x" onclick="delZ('${z.id}')">Borrar</button></div>`}
+
+function pay(id){const c=S.c.find(x=>x.id===id);c.pag=Math.min(c.tot,c.pag+1);save();map.closePopup();render()}
+function editC(id){map.closePopup();formC(S.c.find(x=>x.id===id))}
+function delC(id){if(confirm('¿Borrar este cliente?')){S.c=S.c.filter(x=>x.id!==id);save();map.closePopup();render()}}
+function paso(id){const z=S.z.find(x=>x.id===id),h=iso(hoy());if(lastP(z)!==h)z.p.push(h);save();map.closePopup();render()}
+function potZ(id,v){S.z.find(x=>x.id===id).pot=v;save();map.closePopup();render()}
+function diaZ(id,v){S.z.find(x=>x.id===id).dia=v;save()}
+function delZ(id){if(confirm('¿Borrar esta zona?')){S.z=S.z.filter(x=>x.id!==id);save();map.closePopup();render()}}
+
+function formC(c){cur=c;sh(`<b>${c.id?'Editar':'Nuevo'} cliente</b>
+<label>Nombre</label><input id="fn" value="${esc(c.n)}">
+<label>Teléfono</label><input id="ft" type="tel" value="${esc(c.tel)}">
+<label>Dirección o carril</label><input id="fo" value="${esc(c.nota)}">
+<label>Estado</label><select id="fe"><option value="c">Cliente con cuotas</option><option value="no"${c.t==='no'?' selected':''}>No salió / no es cliente</option><option value="dud"${c.t==='dud'?' selected':''}>Dudoso: soy cliente, pero por ahora no</option></select>
+<label>Cuotas totales</label><input id="fa" type="number" min="1" value="${c.tot||6}">
+<label>Cuotas ya pagadas</label><input id="fp" type="number" min="0" value="${c.pag||0}">
+<label>Fecha de la primera cuota (la elige el cliente)</label><input id="fv" type="date" value="${c.v1||iso(addM(iso(hoy()),1))}">
+<div class="pb"><button onclick="saveC()">Guardar</button><button class="x" onclick="cerrar()">Cancelar</button></div>`)}
+function saveC(){const c=cur;c.n=$('fn').value.trim();c.tel=$('ft').value.trim();c.nota=$('fo').value.trim();c.t=$('fe').value;c.tot=Math.max(1,+$('fa').value||1);c.pag=Math.max(0,+$('fp').value||0);c.v1=$('fv').value||iso(addM(iso(hoy()),1));
+ if(!c.id){if(!dept(c)&&!confirm('Este punto está FUERA de tu zona (San Martín, Junín y Rivadavia). ¿Guardarlo igual?'))return;c.id=Date.now().toString(36);c.vta=iso(hoy());S.c.push(c)}save();cerrar()}
+function formZ(){sh(`<b>Nueva zona</b><label>Nombre (distrito, carril, barrio)</label><input id="zn" list="dl"><datalist id="dl">${NZ.map(n=>`<option value="${n}">`).join('')}</datalist>
+<label>Día de visita</label><select id="zd">${DIAS.map((d,i)=>`<option value="${i}">${i?d:'Sin día'}</option>`).join('')}</select>
+<label>Potencial de venta</label><select id="zp"><option value="">Sin definir</option><option value="F">Fuerte (se vende bien)</option><option value="M">Media</option><option value="D">Difícil (cuesta más)</option></select>
+<label><input id="zh" type="checkbox" checked style="width:auto;min-height:0"> Pasé hoy por esta zona</label>
+<div class="pb"><button onclick="saveZ()">Guardar</button><button class="x" onclick="cerrar()">Cancelar</button></div>`)}
+function saveZ(){S.z.push({id:Date.now().toString(36),n:$('zn').value.trim()||'Zona',pts:pts.slice(),p:$('zh').checked?[iso(hoy())]:[],dia:$('zd').value,pot:$('zp').value});save();cerrar()}
+
+function gps(ok){navigator.geolocation?navigator.geolocation.getCurrentPosition(q=>{const p={lat:q.coords.latitude,lng:q.coords.longitude};pos=p;if(me)me.remove();me=L.circleMarker([p.lat,p.lng],{radius:8,color:'#fff',weight:3,fillColor:'#1a73e8',fillOpacity:1}).addTo(map);ok(p)},()=>alert('No pude obtener tu ubicación. Revisá el permiso de ubicación del navegador.'),{enableHighAccuracy:true,timeout:15000}):alert('Este navegador no tiene ubicación')}
+$('bC').onclick=()=>{mode='cli';render();sh(`<b>Tocá el mapa donde vive el cliente</b><div class="pb"><button onclick="gpsC()">Estoy acá</button><button class="x" onclick="cerrar()">Cancelar</button></div>`)};
+function gpsC(){gps(p=>{mode=null;formC(p);render()})}
+$('bZ').onclick=()=>{mode='zona';pts=[];render();zmsg()};
+function zmsg(){sh(`<b>Tocá las esquinas de la zona (${pts.length} puntos)</b><div class="pb"><button onclick="zUndo()">Deshacer</button><button onclick="zEnd()">Terminar</button><button class="x" onclick="cerrar()">Cancelar</button></div>`)}
+function drawT(){LT.clearLayers();pts.forEach(q=>L.circleMarker(q,{radius:5,color:'#1d3557'}).addTo(LT));if(pts.length>1)L.polyline(pts,{color:'#1d3557',dashArray:'5 5'}).addTo(LT)}
+function zUndo(){pts.pop();drawT();(mode==='cam'?cmsg:zmsg)()}
+function zEnd(){if(pts.length<3)return alert('Marcá al menos 3 puntos');formZ()}
+map.on('click',e=>{const p={lat:e.latlng.lat,lng:e.latlng.lng};
+ if(mode==='cli'){mode=null;formC(p);render()}else if(mode==='zona'){pts.push([p.lat,p.lng]);drawT();zmsg()}
+ else if(mode==='cam'){pts.push([p.lat,p.lng]);drawT();cmsg()}
+ else if(mode==='bar'){mode=null;const n=prompt(bk==='l'?'Nombre del lugar (club, cancha, escuela, plaza...)':'Nombre del barrio');if(n&&n.trim()){S.b.push({id:Date.now().toString(36),n:n.trim(),lat:p.lat,lng:p.lng,k:bk});save()}cerrar();drawB()}else pick(p)});
+$('bP').onclick=()=>panel('zonas');
+$('bL').onclick=()=>gps(p=>{map.setView([p.lat,p.lng],17);const d=dept(p),zs=S.z.filter(z=>inZ(p,z)).map(z=>esc(z.n));sh(`<b>${d?'Estás en '+d:'Estás FUERA de tu zona'}</b>${zs.length?'<br>Zona: '+zs.join(', '):''}<div class="pb"><button class="x" onclick="cerrar()">Cerrar</button></div>`)});
+
+function panel(t){const T=[['zonas','Zonas'],['dist','Distritos'],['datos','Datos']];
+ sh(`<div class="tb">${T.map(x=>`<button class="${x[0]===t?'on':''}" onclick="panel('${x[0]}')">${x[1]}</button>`).join('')}<button onclick="cerrar()" style="flex:.4">✕</button></div>`+({plan:pPlan,cerca:pCerca,zonas:pZonas,dist:pDist,datos:pDatos}[t])())}
+function goC(id){const c=S.c.find(x=>x.id===id);$('sheet').hidden=true;map.setView([c.lat,c.lng],17);L.popup().setLatLng([c.lat,c.lng]).setContent(popC(c)).openOn(map)}
+function goZ(id){$('sheet').hidden=true;map.fitBounds(L.polygon(S.z.find(x=>x.id===id).pts).getBounds())}
+function pPlan(){
+ const zs=S.z.filter(z=>z.dia===''+dia);
+ let l=S.c.map(c=>({c,r:calc(c)})).filter(x=>x.r.k==='rojo'||((x.r.k==='amarillo'||x.r.k==='celeste')&&x.r.d>=-7));
+ if(zs.length)l=l.filter(x=>zs.some(z=>inZ(x.c,z)));
+ l.sort((a,b)=>b.r.d-a.r.d);window.rutaL=l;
+ return `<div class="tb">${[1,2,3,4,5,6].map(i=>`<button class="${i===dia?'on':''}" onclick="dia=${i};panel('plan')">${DIAS[i]}</button>`).join('')}</div>
+<b>Zonas del ${DIAS[dia]}</b>`+(zs.length?zs.map(z=>`<div class="row" onclick="goZ('${z.id}')"><span>${ST[z.pot]||''}${esc(z.n)}</span><span>${hace(age(z))}</span></div>`).join(''):'<div class="row">Ninguna. Tocá una zona en el mapa y elegí su día.</div>')
+ +`<br><b>Para visitar${zs.length?' en esas zonas':''} (${l.length})</b><br><small>Morosos y vencimientos de los próximos 7 días</small>`
+ +l.map(x=>`<div class="row" onclick="goC('${x.c.id}')"><span><i class="dot" style="background:${COL[x.r.k]}"></i>${esc(x.c.n)||'Sin nombre'} · cuota ${x.r.cuota}/${x.c.tot}</span><span>${x.r.d>0?'atraso '+x.r.d+' d':'vence '+fd(x.r.nx)}</span></div>`).join('')
+ +(l.length?`<div class="pb"><button onclick="ruta()">Ruta en Google Maps</button></div>`:'')}
+function ruta(){let q=rutaL.slice(0,9).map(x=>x.c),s=pos||q[0];const o=[];
+ while(q.length){let b=0,bd=1e12;q.forEach((c,i)=>{const d=dist(s,c);if(d<bd){bd=d;b=i}});s=q.splice(b,1)[0];o.push(s)}
+ const ll=o.map(c=>c.lat+','+c.lng),dest=ll.pop();
+ window.open('https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+dest+(ll.length?'&waypoints='+encodeURIComponent(ll.join('|')):''))}
+function pCerca(){
+ const b=`<div class="pb"><button onclick="gps(()=>panel('cerca'))">${pos?'Actualizar ubicación':'Ubicarme'}</button></div>`;
+ if(!pos)return b;
+ const l=S.c.filter(c=>c.t!=='no').map(c=>({c,r:calc(c),d:dist(pos,c)})).sort((a,b)=>a.d-b.d).slice(0,8);
+ return b+(l.length?l.map(x=>`<div class="row" onclick="goC('${x.c.id}')"><span><i class="dot" style="background:${COL[x.r.k]}"></i>${esc(x.c.n)||'Sin nombre'}${!x.r.cuota||x.r.k==='verde'?'':' · cuota '+x.r.cuota+'/'+x.c.tot}</span><span>${x.d<1000?Math.round(x.d)+' m':(x.d/1000).toFixed(1)+' km'}</span></div>`).join(''):'<div class="row">Todavía no cargaste clientes</div>')}
+function pZonas(){
+ if(!S.z.length)return '<div class="row">Todavía no hay zonas. Usá "+ Zona" y armá una por distrito o carril.</div>';
+ return S.z.map(z=>{const k={};let n=0,v=0;CLI.forEach(c=>{if(c.lat!=null&&marked(c)&&inZ(c,z)){const r=calc(c).k;k[r]=(k[r]||0)+1;n++;if(c.vta&&dif(P(c.vta),hoy())<=30)v++}});const cp=(k.amarillo||0)+(k.celeste||0)+(k.verde||0)+(k.rojo||0);
+  return `<div class="row" onclick="goZ('${z.id}')"><span><b>${ST[z.pot]||''}${esc(z.n)}</b><br>${n} clientes ${Object.keys(COL).filter(x=>k[x]).map(x=>`<i class="dot" style="background:${COL[x]}"></i>${k[x]}`).join(' ')}<br>Compras: ${cp}${cp?' · morosos '+Math.round(100*(k.rojo||0)/cp)+'%':''} · ventas últimos 30 d: ${v}</span><span>${hace(age(z))}</span></div>`}).join('')}
+function pDatos(){return `<div class="row"><span>${S.c.length} clientes · ${S.z.length} zonas</span></div>
+<div class="pb"><button onclick="exp()">Exportar copia</button><button onclick="$('imp').click()">Importar copia</button></div>
+<input id="imp" type="file" accept=".json" hidden onchange="imp(this.files[0])">
+<div class="pb"><button onclick="loadB()">Traer barrios de internet</button><button onclick="addB('b')">+ Barrio a mano</button><button onclick="addB('l')">+ Lugar a mano</button></div><div class="pb"><button onclick="gm()">Ver esta zona en Google Maps</button></div><div class="pb"><button onclick="offl()">Guardar esta vista sin internet</button></div><div id="pg"></div><p>Tus datos se guardan solo en este navegador. Exportá una copia seguido.</p>`}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='territorio-'+iso(hoy())+'.json';a.click()}
+function imp(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.c)||!Array.isArray(d.z))throw 0;if(confirm('Esto reemplaza lo que hay ahora. ¿Seguir?')){S=d;S.b=S.b||[];S.r=S.r||[];save();render();panel('datos')}}catch(e){alert('El archivo no es una copia válida')}};r.readAsText(f)}
+
+loadCli();render();drawD();
+map.fitBounds(AB,{maxZoom:15});map.on('zoomend',render);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+const LB=L.layerGroup().addTo(map);let BO=[];try{BO=JSON.parse(localStorage.getItem('barrios-sm-v1'))||[]}catch(e){}
+const say=t=>{const e=$('pg');if(e)e.textContent=t};
+function drawB(){LB.clearLayers();if(map.getZoom()<14)return;
+ BO.map(b=>({n:b[2],lat:b[0],lng:b[1]})).concat(S.b.map(b=>({...b,m:1}))).forEach(b=>{
+  const m=L.marker([b.lat,b.lng],{icon:L.divIcon({className:'',html:`<div class="bl${b.k==='l'?' lg':''}">${b.k==='l'?'📌 ':''}${esc(b.n)}</div>`,iconSize:[0,0]}),interactive:!!b.m,keyboard:false});
+  if(b.m)m.bindPopup(`<b>${esc(b.n)}</b><div class="pb"><button class="x" onclick="delB('${b.id}')">Borrar</button></div>`);m.addTo(LB)})}
+map.on('zoomend',drawB);
+function gm(){const c=map.getCenter();window.open('https://www.google.com/maps/@?api=1&map_action=map&center='+c.lat+','+c.lng+'&zoom='+Math.round(map.getZoom())+(map.hasLayer(sat)?'&basemap=satellite':''))}
+function delB(id){S.b=S.b.filter(x=>x.id!==id);save();map.closePopup();drawB()}
+function addB(k){window.bk=k||'b';mode='bar';render();sh(`<b>Acercá el mapa (zoom 14 o más) y tocá donde va el nombre</b><div class="pb"><button class="x" onclick="cerrar()">Cancelar</button></div>`)}
+async function loadB(){const q=[AB.getSouth(),AB.getWest(),AB.getNorth(),AB.getEast()].join(','),
+ d=`[out:json][timeout:60];(node["place"~"^(neighbourhood|suburb|quarter|hamlet|village|locality)$"](${q});way["place"~"^(neighbourhood|suburb|quarter)$"](${q});way["landuse"="residential"]["name"](${q}););out center tags;`;
+ say('Buscando barrios…');
+ try{const r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(d));if(!r.ok)throw 0;const j=await r.json(),seen={};
+  BO=j.elements.map(e=>[e.lat??e.center?.lat,e.lon??e.center?.lon,e.tags&&e.tags.name]).filter(b=>b[2]&&b[0]&&dept({lat:b[0],lng:b[1]})&&!seen[b[2]]&&(seen[b[2]]=1));
+  localStorage.setItem('barrios-sm-v1',JSON.stringify(BO));drawB();say('Listo: '+BO.length+' barrios y localidades. Se ven al acercar el mapa (zoom 14 o más).')}
+ catch(e){say('No pude traer los barrios. Revisá tu internet o agregalos a mano.')}}
+let dd='San Martín',DC=[];try{DC=JSON.parse(localStorage.getItem('distritos-v1'))||[]}catch(e){}
+const nz=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/^(ciudad de |distrito de |distrito )/,'').replace(/ll/g,'l').replace(/[^a-z0-9 ]/g,'').trim();
+function dcFind(dep,n){const a=nz(n),l=DC.filter(x=>x[3]===dep),m=l.find(x=>nz(x[0])===a)||l.find(x=>nz(x[0]).includes(a)||a.includes(nz(x[0])));return m?{lat:m[1],lng:m[2]}:null}
+function goD(a,b){$('sheet').hidden=true;map.setView([a,b],13)}
+function pDist(){
+ const D=DEP[dd],all=D.d.map(n=>({n,c:dcFind(dd,n)})),q=all.filter(x=>x.c),sin=all.filter(x=>!x.c),o=[];
+ let cur=pos?{lat:pos.lat,lng:pos.lng}:null;
+ if(!cur&&q.length){q.sort((a,b)=>a.c.lng-b.c.lng);cur=q[0].c}
+ while(q.length){let b=0,bd=1e12;q.forEach((x,i)=>{const d=dist(cur,x.c);if(d<bd){bd=d;b=i}});const x=q.splice(b,1)[0];x.km=bd/1000;o.push(x);cur=x.c}
+ return `<div class="tb">${Object.keys(DEP).map(k=>`<button class="${k===dd?'on':''}" onclick="dd='${k}';panel('dist')">${k}</button>`).join('')}</div>
+<div class="pb"><button onclick="loadD()">${DC.length?'Actualizar ubicaciones':'Calcular cercanía (con internet)'}</button><button onclick="gps(()=>panel('dist'))">Ordenar desde mi ubicación</button></div><div id="pg"></div>
+<b>Distritos de ${dd}</b><br><small style="text-align:left">${o.length?'De cada distrito al más cercano siguiente. '+(pos?'Empieza desde donde estás.':'Empieza por el más al oeste.'):'Todavía no tengo las ubicaciones: tocá "Calcular cercanía" con internet.'}</small>`
+ +o.map((x,i)=>`<div class="row" onclick="goD(${x.c.lat},${x.c.lng})"><span>${i+1}. ${esc(x.n)}</span><span>${i===0&&!pos?'inicio':'+'+x.km.toFixed(1)+' km'}</span></div>`).join('')
+ +sin.map(x=>`<div class="row"><span>${esc(x.n)}</span><span>sin ubicación</span></div>`).join('')
+ +`<br><b>Carriles, rutas y barrios importantes</b><p>${D.c.map(esc).join(' · ')}</p>`}
+async function loadD(){const q=[AB.getSouth(),AB.getWest(),AB.getNorth(),AB.getEast()].join(','),d=`[out:json][timeout:60];relation["boundary"="administrative"]["name"~"^Distrito"](${q});out center tags;`;
+ say('Buscando distritos…');
+ try{const r=await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(d));if(!r.ok)throw 0;const j=await r.json();
+  DC=j.elements.map(e=>{const c=e.center||{lat:e.lat,lon:e.lon};return[(e.tags&&e.tags.name||'').replace(/^Distrito( de)?\s+/i,''),c.lat,c.lon,dept({lat:c.lat,lng:c.lon})]}).filter(x=>x[0]&&x[3]);
+  localStorage.setItem('distritos-v1',JSON.stringify(DC));panel('dist');say('Listo: '+DC.length+' distritos ubicados.')}
+ catch(e){say('No pude traer los distritos. Revisá tu internet.')}}
+/* Caminos dibujados a mano (los que se ven en el satélite y no están en el mapa) */
+function cmsg(){sh(`<b>Tocá puntos siguiendo el camino (${pts.length})</b><br><small style="text-align:left">Cambiá a Satélite con el selector del mapa para verlo bien.</small><div class="pb"><button onclick="zUndo()">Deshacer</button><button onclick="cEnd()">Terminar</button><button class="x" onclick="cerrar()">Cancelar</button></div>`)}
+function cEnd(){if(pts.length<2)return alert('Marcá al menos 2 puntos');const n=prompt('Nombre del camino (opcional)','');S.r.push({id:Date.now().toString(36),n:(n||'').trim()||'Camino',pts:pts.slice()});save();cerrar()}
+function popR(r){const a=r.pts[0],b=r.pts[r.pts.length-1],g=p=>'https://www.google.com/maps/dir/?api=1&destination='+p[0]+','+p[1];
+ return`<b>${esc(r.n)}</b><div class="pb"><a target="_blank" href="${g(a)}">Ir al inicio</a><a target="_blank" href="${g(b)}">Ir al final</a><button class="x" onclick="delR('${r.id}')">Borrar</button></div>`}
+function delR(id){if(confirm('¿Borrar este camino?')){S.r=S.r.filter(x=>x.id!==id);save();map.closePopup();render()}}
+$('bK').onclick=()=>{mode='cam';pts=[];render();cmsg()};
+/* ===== Clientes en el mapa (se leen de la app de clientes) y casa tocada ===== */
+function marked(c){return !!(c.mor||c.t||(c.comp==='si'&&c.ct&&c.cv))}
+function loadCli(){try{CLI=JSON.parse(localStorage.getItem('clientes-canc-v1'))||[]}catch(e){CLI=[]}}
+function tellClient(c){parent.postMessage({t:'client',ids:[c.id]},'*')}
+function sq(p){const a=6/111320,b=6/(111320*Math.cos(p.lat*Math.PI/180));return[[p.lat-a,p.lng-b],[p.lat-a,p.lng+b],[p.lat+a,p.lng+b],[p.lat+a,p.lng-b]]}
+function nearD(c){const dp=dept(c);let b='',bd=1e12;(DC||[]).forEach(x=>{if(x[3]===dp){const d=dist(c,{lat:x[1],lng:x[2]});if(d<bd){bd=d;b=x[0]}}});return b}
+async function buildingAt(lat,lng){
+ if(!HSRC)return null;
+ const z=HMAX,n=2**z,r=Math.PI/180,x=Math.floor((lng+180)/360*n),y=Math.floor((1-Math.log(Math.tan(lat*r)+1/Math.cos(lat*r))/Math.PI)/2*n);
+ let m;try{m=await HSRC.get({z,x,y},256)}catch(e){return null}
+ const toLL=q=>{const X=(x+q.x/256)/n,Y=(y+q.y/256)/n;return[Math.atan(Math.sinh(Math.PI*(1-2*Y)))/r,X*360-180]};
+ let best=null;
+ for(const[name,fs]of m){if(HNAMES.length?!HNAMES.includes(name):!/build/i.test(name))continue;
+  for(const f of fs){if(f.geomType!==3)continue;
+   for(const ring of f.geom){if(ring.length<4)continue;
+    const pts=ring.map(toLL),area=Math.abs(ring.reduce((a,q,i)=>{const w=ring[(i+1)%ring.length];return a+q.x*w.y-w.x*q.y},0))/2;
+    const cen={lat:pts.reduce((a,q)=>a+q[0],0)/pts.length,lng:pts.reduce((a,q)=>a+q[1],0)/pts.length};
+    const d=inZ({lat,lng},{pts})?0:dist({lat,lng},cen);
+    if(d<=25&&(!best||d<best.d||(d===best.d&&area<best.a)))best={d,a:area,poly:pts,c:cen}}}}
+ if(!best)return null;
+ let poly=best.poly;if(poly.length>13){const k=Math.ceil(poly.length/12);poly=poly.filter((q,i)=>i%k===0)}
+ return{poly,c:best.c}}
+
+async function pick(p){
+ if(!HL||!map.hasLayer(HL))return hmsg('Activá las casas con el botón 🏠 y tocá una casita');
+ const hit=CLI.filter(c=>c.poly&&c.poly.length>2&&inZ(p,{pts:c.poly}));
+ if(hit.length){if(HS){HS.remove();HS=null}return parent.postMessage({t:'client',ids:hit.map(c=>c.id)},'*')}
+ const b=await buildingAt(p.lat,p.lng),poly=b?b.poly:sq(p),c0=b?b.c:p;
+ if(HS)HS.remove();
+ HS=L.polygon(poly,{color:'#111',weight:3,fillColor:'#ffe14d',fillOpacity:.85,interactive:false}).addTo(map);
+ parent.postMessage({t:'house',lat:c0.lat,lng:c0.lng,poly:poly.map(q=>[+q[0].toFixed(6),+q[1].toFixed(6)]),found:!!b,zona:nearD(c0),dep:dept(c0)},'*')}
+window.addEventListener('message',e=>{const m=e.data||{};
+ if(m.t==='refresh'){loadCli();render()}
+ else if(m.t==='clearsel'){if(HS){HS.remove();HS=null}}
+ else if(m.t==='goto'){loadCli();render();const c=CLI.find(x=>x.id===m.id);if(c&&c.lat!=null)map.setView([c.lat,c.lng],18);else hmsg('Este cliente todavía no tiene ubicación. Tocá una casa para ubicarlo o usá "Ubicar" en la lista.')}});
+/* Casas: edificios detectados por satélite (Overture Maps). Se ven como cuadraditos naranjas. */
+const OV=r=>'https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/'+r+'/buildings.pmtiles';
+const HU=['https://data.source.coop/vida/google-microsoft-open-buildings/pmtiles/go_ms_building_footprints.pmtiles','https://data.source.coop/vida/google-microsoft-osm-open-buildings/pmtiles/goog_msft_osm.pmtiles',OV('2026-11-18.0'),OV('2026-09-23.0')];
+let HL=null,HB=0,hT,HSRC=null,HMAX=14,HNAMES=[];
+function hmsg(t){const e=$('hs');e.textContent=t;e.hidden=!t;clearTimeout(hT);if(t)hT=setTimeout(()=>e.hidden=true,8000)}
+async function toggleH(){
+ if(HL&&map.hasLayer(HL)){map.removeLayer(HL);try{localStorage.setItem('casas-off','1')}catch(e){}$('bH').style.background='#fff';return hmsg('Casas ocultas')}
+ if(!window.protomapsL)return hmsg('No cargó la herramienta de casas. Revisá tu internet y recargá la página.');
+ if(HB)return;
+ if(!HL){HB=1;hmsg('Cargando casas…');
+  const ERR=[];for(const u of HU){try{
+   const src=new protomapsL.PmtilesSource(u,false),h=await src.p.getHeader();HSRC=src;HMAX=h.maxZoom;let md={};try{md=await src.p.getMetadata()}catch(e){}
+   const all=((md&&md.vector_layers)||[]).map(x=>x.id);let names=all.filter(n=>/build/i.test(n));if(!names.length)names=all.length?all:['building','buildings'];HNAMES=names;
+   HL=protomapsL.leafletLayer({url:u,maxDataZoom:h.maxZoom,zIndex:5,attribution:'Casas: Overture Maps (Microsoft, Google y OSM)',paintRules:names.map(n=>({dataLayer:n,symbolizer:new protomapsL.PolygonSymbolizer({fill:'#ff6a00',opacity:.9,stroke:'#7a2d00',width:.8})})),labelRules:[]});
+   break}catch(e){HL=null;ERR.push((e&&e.message)||String(e))}}
+  HB=0;if(!HL)return hmsg('No pude cargar las casas ('+ERR.slice(0,2).join(' · ').slice(0,110)+'). Probá de nuevo; si sigue igual, mandame una captura de este aviso.')}
+ HL.addTo(map);try{localStorage.removeItem('casas-off')}catch(e){}$('bH').style.background='#ffd8b5';hmsg('Casas activadas. Acercá el mapa (zoom 14 o más) y tocá una casita.')}
+$('bH').onclick=toggleH;
+async function offl(){const l=map.hasLayer(sat)?sat:osm,b=map.getBounds(),z0=Math.round(map.getZoom()),u=[],r=Math.PI/180;
+ for(let z=z0;z<=Math.min(z0+2,17);z++){const s=2**z,t=p=>({x:Math.floor((p.lng+180)/360*s),y:Math.floor((1-Math.log(Math.tan(p.lat*r)+1/Math.cos(p.lat*r))/Math.PI)/2*s)}),a=t(b.getNorthWest()),c=t(b.getSouthEast());
+  for(let x=a.x;x<=c.x;x++)for(let y=a.y;y<=c.y;y++)u.push(l.getTileUrl({x,y,z}))}
+ if(u.length>600)return alert('Esta vista es muy grande ('+u.length+' imágenes). Acercá el mapa a un distrito y probá de nuevo.');
+ let bad=0;for(let i=0;i<u.length;i+=6){await Promise.all(u.slice(i,i+6).map(x=>fetch(x,{mode:'cors'}).then(q=>{if(!q.ok)bad++}).catch(()=>bad++)));$('pg').textContent='Guardando '+Math.min(i+6,u.length)+' de '+u.length+'…'}
+ $('pg').textContent=bad?'Listo, pero fallaron '+bad+'. Probá de nuevo con mejor señal.':'Listo: esta zona ya funciona sin internet ('+u.length+' imágenes).'}
+setInterval(()=>{if(!mode&&!map._popup)render()},6e5);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!mode&&!map._popup)render()});
+if(!BO.length&&navigator.onLine)loadB();drawB();
+parent.postMessage({t:'ready'},'*');setTimeout(()=>{try{if(localStorage.getItem('casas-off')!=='1')toggleH()}catch(e){}},700);
+</script></body></html>

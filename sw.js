@@ -1,0 +1,7 @@
+const V='app-v2',T='tiles-v1',SHELL=['./','./index.html','./mapa.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','https://cdn.jsdelivr.net/npm/protomaps-leaflet@5.1.0/dist/protomaps-leaflet.js'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.allSettled(SHELL.map(u=>c.add(u)))).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==T).map(x=>caches.delete(x)))).then(()=>clients.claim()))});
+self.addEventListener('fetch',e=>{const r=e.request,u=r.url;if(r.method!=='GET'||r.headers.has('range')||/nominatim|overpass|googleapis|amazonaws|source\.coop/.test(u))return;
+ const tile=/tile\.openstreetmap\.org|arcgisonline\.com/.test(u);
+ if(tile||/cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net/.test(u)){e.respondWith(caches.match(r).then(h=>h||fetch(r).then(x=>{if(x.ok){const y=x.clone();caches.open(tile?T:V).then(c=>c.put(r,y))}return x}).catch(()=>new Response('',{status:504}))));return}
+ e.respondWith(fetch(r).then(x=>{if(x.ok){const y=x.clone();caches.open(V).then(c=>c.put(r,y))}return x}).catch(()=>caches.match(r,{ignoreSearch:true}).then(h=>h||caches.match('./index.html'))))});

@@ -1,0 +1,362 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Cancelados">
+<meta name="theme-color" content="#14213d"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><title>Territorio y Clientes</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;font:16px/1.35 system-ui,-apple-system,sans-serif;color:#14213d;background:#f3f5f9}
+header{position:sticky;top:0;z-index:5;background:#14213d;color:#fff;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px}
+header h1{font-size:18px;margin:0 0 8px;display:flex;justify-content:space-between}
+button,input,select,textarea{font:inherit;color:inherit}
+.up{display:block;text-align:center;background:#2e9e5b;color:#fff;font-weight:700;padding:12px;border-radius:10px}
+input[type=text],input:not([type]),input[type=search],select,textarea{width:100%;min-height:42px;border:1px solid #cfd5df;border-radius:8px;padding:6px 10px;background:#fff;margin-top:6px}
+#chips{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 2px}
+.ch{flex:none;border:1px solid #cfd5df;background:#fff;border-radius:20px;padding:6px 12px;font-weight:600}.ch.on{background:#14213d;color:#fff;border-color:#14213d}
+#flt{padding:0 12px}main{padding:8px 12px 90px}
+.card{background:#fff;border-radius:12px;margin:8px 0;box-shadow:0 1px 4px #0002;padding:12px}
+summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}
+.sub{display:block;font-size:14px;color:#556}.bd i{display:inline-block;font-style:normal;font-size:12px;font-weight:700;background:#e8ebf2;border-radius:10px;padding:2px 8px;margin:4px 4px 0 0}
+.bd i.ok{background:#cdeedb}.bd i.no{background:#f7d0d0}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}.row>span{min-width:92px;font-weight:600}
+.ac,.tg,.bar2 button{min-height:40px;padding:0 12px;border:0;border-radius:8px;background:#14213d;color:#fff;font-weight:600;text-decoration:none;display:inline-grid;place-items:center}
+.tg{background:#e8ebf2;color:#14213d}.tg.on{background:#2e9e5b;color:#fff}.tg.on.neg{background:#d93a3a}
+.g{background:#8b92a0!important}.empty{text-align:center;color:#556;padding:30px 10px}
+#rev{position:fixed;inset:0;z-index:20;background:#f3f5f9;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 100px}
+#wm{position:fixed;inset:0;z-index:25;background:#f3f5f9;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 100px}
+#rev .card.dup{opacity:.6}.ck{display:flex;gap:8px;align-items:center;font-weight:700}.ck input{width:20px;height:20px}
+.bar2{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px);background:#fff;box-shadow:0 -2px 8px #0003}.bar2 button{flex:1}
+#msg{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 66px);z-index:30;background:#14213d;color:#fff;padding:12px;border-radius:10px;text-align:center}
+.foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:18px 0}.foot button{background:none;border:1px solid #8b92a0;border-radius:8px;padding:8px 12px}
+h3.h0{display:flex;justify-content:space-between;background:#14213d;color:#fff;padding:8px 12px;border-radius:8px;margin:16px 0 4px;font-size:15px}h3.h1{margin:10px 0 0;font-size:12px;color:#556;text-transform:uppercase;letter-spacing:.04em}
+input[type=number],input[type=date]{min-height:42px;border:1px solid #cfd5df;border-radius:8px;padding:6px 10px;background:#fff;margin-top:6px}
+small{display:block;text-align:center;color:#556}
+.tools{display:flex;gap:8px;margin-top:8px}.tools button{flex:1;font-size:13px;padding:0 6px;min-height:42px;border:0;border-radius:10px;background:#f2b705;color:#14213d;font:inherit;font-weight:700}
+pre.pv{white-space:pre-wrap;background:#fff;border-radius:12px;padding:12px;font:15px/1.4 system-ui;box-shadow:0 1px 4px #0002}
+#nav{position:fixed;left:0;right:0;bottom:0;z-index:12;display:flex;background:#14213d;padding-bottom:env(safe-area-inset-bottom,0px)}
+#nav button{flex:1;min-height:52px;border:0;background:none;color:#cfd5df;font:inherit;font-weight:700}#nav .on{color:#fff;background:#2a3b63}
+#mv{display:none;position:fixed;left:0;right:0;top:0;bottom:calc(52px + env(safe-area-inset-bottom,0px));z-index:8;background:#fff}#mv iframe{width:100%;height:100%;border:0}
+body.mapa #mv{display:block}body.mapa header,body.mapa #chips,body.mapa #flt,body.mapa main,body.mapa .foot,body.mapa>small{display:none}
+#cs{position:fixed;left:8px;right:8px;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:15;background:#f3f5f9;border-radius:16px;max-height:68vh;overflow:auto;padding:10px;box-shadow:0 -2px 16px #0006}
+.csh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.csh button{border:0;background:#14213d;color:#fff;border-radius:8px;width:40px;height:36px;font:inherit}
+</style></head><body>
+<header><h1><span>Clientes cancelados</span><span id="cnt"></span></h1>
+<label class="up">📷 Subir capturas<input id="f" type="file" accept="image/*" multiple hidden></label><div class="tools"><button onclick="nearOn()">📍 Cercanos</button><button onclick="smart()">🧠 Ordenar inteligente</button><button onclick="colaOpen()">💬 Cola</button></div></header>
+<div id="chips"></div>
+<div id="flt"><input type="search" id="q" placeholder="Buscar por nombre, código, calle o teléfono"><select id="zsel"></select><select id="ord"><option value="zona">Ordenar: zona → barrio → calle</option><option value="calle">Ordenar: calle o carril</option><option value="barrio">Ordenar: barrio → manzana</option><option value="nombre">Ordenar: nombre (A-Z)</option><option value="compra">Ordenar: última compra</option><option value="cerca">Ordenar: más cercanos a mí</option><option value="intel">Ordenar: ruta inteligente</option><option value="agenda">Ordenar: agenda (fecha)</option></select></div>
+<main id="list"></main>
+<div class="foot"><button onclick="editMain()">Mensaje principal</button><button onclick="geoManual()">Ubicar por dirección</button><button onclick="exp()">Exportar copia</button><button onclick="$('imp').click()">Importar copia</button><button onclick="delAll()">Borrar todo</button></div>
+<input id="imp" type="file" accept=".json" hidden>
+<small>Los datos quedan solo en este celular. El DNI se muestra oculto: tocalo para verlo.</small>
+<div id="mv"><iframe id="mf" allow="geolocation"></iframe></div><div id="cs" hidden></div><nav id="nav"><button id="t1" class="on" onclick="tab('cli')">👥 Clientes</button><button id="t2" onclick="tab('mapa')">🗺️ Mapa</button></nav>
+<div id="wm" hidden></div><div id="rev" hidden></div><div id="msg" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script>
+const KEY='clientes-canc-v1';
+let C=[],P=[],F='todos',Z='',Q='';let pos=null,SO={},CL={},OW=null,LIM=100,LSIG='';
+try{C=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
+const save=()=>{OW=null;try{localStorage.setItem(KEY,JSON.stringify(C))}catch(e){msg('No se pudo guardar en este navegador')}mapRefresh()};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const hoy=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fd=s=>s?s.split('-').reverse().slice(0,2).join('/'):'';
+const fdf=s=>s?s.split('-').reverse().join('/'):'';
+const norm=c=>String(c||'').toUpperCase().replace(/\s/g,'');
+let mt;function msg(t){const m=$('msg');m.textContent=t;m.hidden=!t;clearTimeout(mt);if(t)mt=setTimeout(()=>m.hidden=true,5000)}
+
+/* Lee el texto de una captura de la app de la empresa y arma los clientes (sin DNI) */
+function parse(t){
+ const L=t.split('\n').map(x=>x.trim()).filter(Boolean),ix=[],out=[];
+ L.forEach((l,i)=>{if(i>0&&/^Cod[:.;]?\s*\S+/i.test(l))ix.push(i)});
+ ix.forEach((i,k)=>{
+  const blk=L.slice(i,k+1<ix.length?ix[k+1]-1:L.length);
+  const n=L[i-1].replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]/g,'').replace(/\s+/g,' ').trim();
+  const cod=(blk[0].match(/^Cod[:.;]?\s*([\w-]+)/i)||[])[1]||'',dni=((blk[0].match(/DNI[:.;]?\s*([\d.]{6,12})/i)||[])[1]||'').replace(/\D/g,'');
+  let dir='',zona='',est='',uc='',tel=[],hT=0,hD=0;
+  blk.slice(1).forEach(l=>{
+   if(/^Tel[eé]fono/i.test(l)){hT=1;(l.replace(/^Tel[eé]fono[:.]?/i,'').match(/\d[\d-]*/g)||[]).forEach(x=>{const d=x.replace(/\D/g,'');if(d.length>=7&&!tel.includes(d))tel.push(d)})}
+   else if(/^Distancia/i.test(l))hD=1;
+   else if(/^[UÚ]ltima compra/i.test(l)){const m=l.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(m)uc=m[3].padStart(4,'20')+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}
+   else if(/^(Cancelado|Activo|Moroso|Vigente|Baja)\b/i.test(l))est=l;
+   else if(!hT&&!dir)dir=l;
+   else if(hD&&!zona&&!est&&/[A-Za-z]/.test(l))zona=l.replace(/\s*San Mart[ií]n\s*$/i,'').trim()||l;
+  });
+  const a=pa(dir);out.push({n,cod,dni,dir,tel,zona,est,uc,barrio:a.bar,mz:a.mz,rev:!(hT&&est)});
+ });
+ return out}
+
+async function run(files){
+ if(!window.Tesseract)return msg('No cargó el lector. Conectate a internet y recargá la página.');
+ const all=[];let wk;
+ try{
+  msg('Preparando el lector (la primera vez tarda un poco)…');
+  wk=await Tesseract.createWorker('spa');
+  for(let i=0;i<files.length;i++){msg('Leyendo captura '+(i+1)+' de '+files.length+'…');const r=await wk.recognize(files[i]);all.push(...parse(r.data.text))}
+ }catch(e){msg('Error al leer: '+(e.message||e))}
+ if(wk)try{await wk.terminate()}catch(e){}
+ const m=new Map();
+ all.forEach(p=>{const k=norm(p.cod);if(!k)return m.set('x'+m.size+Math.random(),p);const o=m.get(k);if(!o||(o.rev&&!p.rev))m.set(k,p)});
+ P=[...m.values()].map(p=>({...p,dup:!!(p.cod&&C.find(x=>norm(x.cod)===norm(p.cod)))}));
+ const dups=P.filter(p=>p.dup);dups.forEach(mergeDup);if(dups.length)save();P=P.filter(p=>!p.dup);
+ if(P.length){msg(dups.length?dups.length+' repetidos omitidos (ya estaban cargados)':'');showRev()}else msg(dups.length?'Los '+dups.length+' clientes ya estaban cargados. No se agregó ninguno.':'No encontré clientes en esas capturas.')}
+/* un repetido no se agrega: solo completa datos que faltaban, sin pisar nada */
+function mergeDup(p){const o=C.find(x=>norm(x.cod)===norm(p.cod));if(!o)return;['n','dir','zona','uc','dni'].forEach(k=>{if(!o[k]&&p[k])o[k]=p[k]});if(!(o.tel||[]).length)o.tel=(p.tel||[]).slice()}
+
+function showRev(){
+ const r=$('rev');r.hidden=false;
+ r.innerHTML=`<h2>Revisá antes de guardar (${P.length})</h2><p>Corregí lo que se haya leído mal antes de guardar.</p>`+P.map((p,i)=>`<div class="card ${p.dup?'dup':''}"><label class="ck"><input type="checkbox" id="k${i}" ${p.dup?'':'checked'}>${p.manual?'Cliente nuevo en esta casa':p.editId?'Editando cliente':p.dup?'Ya está en tu lista':p.rev?'Revisar: puede estar cortado':'Nuevo'}</label>
+<input id="n${i}" value="${esc(p.n)}" placeholder="Nombre"><input id="c${i}" value="${esc(p.cod)}" placeholder="Código"><input id="i${i}" value="${esc(p.dni)}" placeholder="DNI" inputmode="numeric"><input id="d${i}" value="${esc(p.dir)}" placeholder="Dirección"><input id="t${i}" value="${esc(p.tel.join(' '))}" placeholder="Teléfonos" inputmode="tel"><input id="z${i}" value="${esc(p.zona)}" placeholder="Zona o distrito"><input id="b${i}" value="${esc(p.barrio)}" placeholder="Barrio (opcional)"><input id="m${i}" value="${esc(p.mz)}" placeholder="Manzana (opcional)">${p.manual?`<select id="e${i}"><option value="cn">Cancelado (terminó de pagar)</option><option value="c">Pagando (con cuotas)</option><option value="dud">Dudoso</option><option value="no">No salió / no es cliente</option></select>`:''}</div>`).join('')
+ +`<div class="bar2"><button onclick="saveRev()">Guardar seleccionados</button><button class="g" onclick="$('rev').hidden=true;P=[]">Cancelar</button></div>`}
+function saveRev(){
+ let n=0;
+ P.forEach((p,i)=>{if(!$('k'+i).checked)return;
+  const o={cod:$('c'+i).value.trim(),n:$('n'+i).value.trim(),dir:$('d'+i).value.trim(),tel:$('t'+i).value.split(/[\s,;]+/).map(x=>x.replace(/\D/g,'')).filter(x=>x.length>=7),zona:$('z'+i).value.trim(),uc:p.uc,dni:$('i'+i).value.replace(/\D/g,''),barrio:$('b'+i).value.trim(),mz:$('m'+i).value.trim()};
+  if(p.manual){o.lat=p.lat;o.lng=p.lng;o.poly=p.poly;o.gq='casa';o.t=$('e'+i).value;if(o.t==='c')o.comp='si'}
+  if(p.editId){Object.assign(C.find(x=>x.id===p.editId),o);return}
+  const old=o.cod&&C.find(x=>norm(x.cod)===norm(o.cod));
+  if(old){['n','dir','zona','uc','dni','barrio','mz'].forEach(k=>{if(!old[k])old[k]=o[k]});o.tel.forEach(t=>{if(!old.tel.includes(t))old.tel.push(t)})}
+  else{C.push({id:Date.now().toString(36)+i,...o,vis:'',lla:'',ate:'',rec:'',nota:''});n++}});
+ save();P=[];$('rev').hidden=true;render();closeCs();msg(n+' clientes nuevos guardados')}
+
+function pa(d){d=String(d||'').toUpperCase();let bar='',mz='',m;
+ const BR=/\b(?:B[°º]|B\.|BO\.?|BARRIO)\s*[A-Z0-9ÁÉÍÓÚÑ .'-]+?(?=\s+(?:MZA?\.?|MANZANA|MANZ\.?|CASA|CS|LOTE|CALLE|N[°º])\b|$)/,MZ=/\b(?:MZA?\.?|MANZANA|MANZ\.?)\s*[A-Z0-9]+/;
+ if(m=d.match(BR))bar=m[0].replace(/^(?:B[°º]|B\.|BO\.?|BARRIO)\s*/,'').trim();
+ if(m=d.match(MZ))mz=m[0].replace(/^[A-Z.]+\s*/,'').trim();
+ let c=d.replace(BR,'').replace(MZ,'').replace(/\b(?:CASA|CS)\b\.?\s*\d+/,'').trim();
+ const nm=c.match(/\s(\d{1,5})\s*$/),num=nm?+nm[1]:0;
+ c=c.replace(/\s+\d{1,5}\s*$/,'').replace(/\s+(S\/?\s?N|S_N|SN)\s*$/,'').trim();
+ return{bar,mz,calle:c,num}}
+const B=c=>c.barrio?c.barrio:pa(c.dir).bar,M=c=>c.mz?c.mz:pa(c.dir).mz;
+const cmp=(a,b)=>(!a)-(!b)||String(a).localeCompare(String(b),'es',{numeric:true});
+const ORD={
+ zona:{k:c=>[c.zona,B(c),pa(c.dir).calle,pa(c.dir).num],h:[c=>c.zona||'Sin zona',c=>B(c)?'Barrio '+B(c):pa(c.dir).calle||'Sin calle']},
+ calle:{k:c=>[pa(c.dir).calle,pa(c.dir).num],h:[c=>pa(c.dir).calle||'Sin calle']},
+ barrio:{k:c=>[B(c),M(c),pa(c.dir).calle,pa(c.dir).num],h:[c=>B(c)?'Barrio '+B(c):'Sin barrio',c=>M(c)?'Manzana '+M(c):'']},
+ nombre:{k:c=>[c.n],h:[]},
+ compra:{k:c=>[c.uc?String(1e8-parseInt(c.uc.replace(/-/g,''))).padStart(9,'0'):''],h:[]}};
+ORD.cerca={k:c=>[c.lat!=null&&pos?String(Math.round(dist(pos,c))).padStart(8,'0'):''],h:[]};
+ORD.intel={k:c=>[String(SO[c.id]!=null?SO[c.id]:99999).padStart(5,'0')],h:[c=>CL[c.id]||'Sin ubicación']};
+ORD.agenda={k:c=>[c.ag||''],h:[c=>c.ag?(c.ag===hoy()?'Hoy':c.ag<hoy()?'Vencidos':dn(c.ag)+' '+fd(c.ag)):'Sin agenda']};
+let O='zona';
+function grp(l){const o=ORD[O];
+ l=l.slice().sort((a,b)=>{const x=o.k(a),y=o.k(b);for(let i=0;i<x.length;i++){const r=cmp(x[i],y[i]);if(r)return r}return 0});window.VIS=l;
+ const cnt={};if(o.h[0])l.forEach(c=>{const h=o.h[0](c);cnt[h]=(cnt[h]||0)+1});
+ let p=[],s='';
+ l.slice(0,LIM).forEach(c=>{o.h.forEach((f,i)=>{const h=f(c);if(h&&h!==p[i]){p[i]=h;p.length=i+1;s+=`<h3 class="h${i}">${esc(h)}${i===0?' <span>'+cnt[h]+'</span>':''}</h3>`}});s+=card(c)});
+ return s+(l.length>LIM?`<div class="card" style="text-align:center"><button class="tg" onclick="LIM+=100;render()">Mostrar 100 más (${LIM} de ${l.length})</button></div>`:'')}
+const flt={todos:()=>1,sinm:c=>stat(c).k==='sin',marc:c=>stat(c).k!=='sin',cerca:c=>pos&&c.lat!=null&&dist(pos,c)<=5000,ruta:c=>SO[c.id]!=null,hoyag:c=>c.ag===hoy(),ag:c=>!!c.ag,wsp:c=>!c.wsp,resp:c=>c.wsp&&!c.wres,rc:c=>c.comp==='si',llamar:c=>!c.lla,visitar:c=>!c.vis,si:c=>c.rec==='si',luego:c=>c.rec==='luego',no:c=>c.rec==='no'};
+function chips(){
+ $('cnt').textContent=C.length+' en lista'+(C.some(flt.hoyag)?' · '+C.filter(flt.hoyag).length+' para hoy':'');
+ $('chips').innerHTML=[['todos','Todos'],['llamar','Por llamar'],['visitar','Por visitar'],['si','Quieren volver'],['luego','Más adelante'],['no','No quieren'],['wsp','Sin WhatsApp'],['resp','Esperando respuesta'],['rc','Recompraron'],['hoyag','Para hoy'],['ag','Agendados'],['ruta','Ruta de hoy'],['cerca','Cercanos (5 km)'],['sinm','Sin marcar'],['marc','Marcados']].map(([k,t])=>`<button class="ch${F===k?' on':''}" onclick="chip('${k}')">${t} ${C.filter(flt[k]).length}</button>`).join('')}
+function render(){
+ const sg=F+'|'+Z+'|'+Q+'|'+O;if(sg!==LSIG){LSIG=sg;LIM=100}
+ window.VIS=[];chips();
+ const zs=[...new Set(C.map(c=>c.zona).filter(Boolean))].sort();
+ $('zsel').innerHTML='<option value="">Todas las zonas</option>'+zs.map(z=>`<option${z===Z?' selected':''}>${esc(z)}</option>`).join('');
+ const q=Q.toLowerCase(),l=C.filter(c=>flt[F](c)&&(!Z||c.zona===Z)&&(!q||(c.n+' '+c.cod+' '+(c.dni||'')+' '+c.dir+' '+(B(c)||'')+' '+c.tel.join(' ')).toLowerCase().includes(q)));
+ $('list').innerHTML=l.length?grp(l):'<p class="empty">'+(C.length?'No hay clientes con ese filtro.':'Subí capturas con el botón 📷 para armar tu lista.')+'</p>';if(F==='ruta'&&l.length)$('list').insertAdjacentHTML('afterbegin',rutaBar())}
+/* ===== Cercanos, ruta inteligente y agenda ===== */
+const dist=(a,b)=>{const r=Math.PI/180,x=(b.lng-a.lng)*r*Math.cos((a.lat+b.lat)/2*r),y=(b.lat-a.lat)*r;return 6371000*Math.hypot(x,y)};
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const dn=s=>['dom','lun','mar','mié','jue','vie','sáb'][new Date(s+'T12:00:00').getDay()];
+const kmt=c=>{const d=dist(pos,c);return(c.gq==='gps'||c.gq==='casa'?'':'~')+(d<1000?Math.round(d)+' m':(d/1000).toFixed(1)+' km')};
+const agl=c=>(c.agt==='llamada'?'Llamar ':'Visitar ')+(c.ag===hoy()?'hoy':c.ag<hoy()?'(vencido '+fd(c.ag)+')':dn(c.ag)+' '+fd(c.ag));
+function chip(k){if(k==='cerca'){nearOn();return}F=k;render()}
+function gps(ok,bad){
+ if(!navigator.geolocation){msg('Este navegador no tiene ubicación');bad&&bad();return}
+ navigator.geolocation.getCurrentPosition(q=>{pos={lat:q.coords.latitude,lng:q.coords.longitude};ok&&ok(pos)},()=>{msg('No pude obtener tu ubicación. Revisá el permiso en los ajustes.');bad&&bad()},{enableHighAccuracy:true,timeout:15000})}
+function nearOn(){msg('Buscando tu ubicación…');gps(()=>{const n=C.filter(flt.cerca).length;F='cerca';O='cerca';$('ord').value='cerca';render();
+ msg(n?n+' clientes a menos de 5 km (el ~ es ubicación aproximada)':C.some(c=>c.lat!=null)?'No hay clientes ubicados a menos de 5 km.':'Todavía no ubiqué a ningún cliente. Tocá "Ordenar inteligente" o "Ubicar por dirección".')})}
+function setloc(id){msg('Tomando tu ubicación…');gps(p=>{const c=C.find(x=>x.id===id);c.lat=p.lat;c.lng=p.lng;c.gq='gps';c.poly=null;save();render();msg('Ubicación guardada para este cliente')})}
+function agset(id,v){const c=C.find(x=>x.id===id),d=new Date();
+ c.ag=v===0?isoD(d):v===1?(d.setDate(d.getDate()+1),isoD(d)):v==='sab'?(d.setDate(d.getDate()+(((6-d.getDay()+7)%7)||7)),isoD(d)):v||'';
+ save();chips();redraw(id)}
+/* Ubicar por dirección con OpenStreetMap (aproximado: calle o distrito si no hay número) */
+const BB='&viewbox=-69.01,-32.72,-67.95,-33.73&bounded=1',sl=()=>new Promise(r=>setTimeout(r,1100));
+async function geoQ(q){const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar'+BB+'&q='+encodeURIComponent(q));if(!r.ok)throw 0;const j=await r.json();return j[0]?{lat:+j[0].lat,lng:+j[0].lon}:null}
+async function geoAll(){
+ const l=C.filter(c=>c.lat==null&&!c.gt);if(!l.length)return;
+ if(!navigator.onLine)return msg('Sin internet: no puedo ubicar por dirección.');
+ for(let i=0;i<l.length;i++){const c=l[i],a=pa(c.dir),cl=(a.calle||'').trim(),z=c.zona||'';msg('Ubicando '+(i+1)+' de '+l.length+'…');
+  let r=null,q='';
+  try{
+   if(a.num>0&&cl){r=await geoQ(cl+' '+a.num+', '+z+', San Martín, Mendoza');q='dir';await sl()}
+   if(!r&&cl){r=await geoQ(cl+', '+z+', Mendoza');q='calle';await sl()}
+   if(!r&&z){r=await geoQ(z+', Mendoza');q='zona';await sl()}
+  }catch(e){save();return msg('Se cortó la búsqueda. Probá de nuevo con mejor señal.')}
+  c.gt=1;if(r){c.lat=r.lat;c.lng=r.lng;c.gq=q}
+  if(i%5===4)save()}
+ save();render();msg('Listo: ubicación aproximada de tus clientes cargada')}
+function geoManual(){C.forEach(c=>{if(c.lat==null)c.gt=0});geoAll()}
+/* Botón inteligente: primero los agendados de hoy, después las calles más cercanas entre sí */
+async function smart(){
+ msg('Pensando la mejor ruta…');
+ await new Promise(r=>gps(r,r));
+ if(C.some(c=>c.lat==null&&!c.gt)&&navigator.onLine)await geoAll();
+ const h=hoy(),cand=C.filter(c=>!c.vis&&c.rec!=='no'&&!(c.ag&&c.ag>h));
+ if(!cand.length)return msg('No hay clientes pendientes para ordenar.');
+ const key=c=>(pa(c.dir).calle||'?')+'|'+(c.zona||'?'),byK={},tmp={};
+ C.forEach(c=>{if(c.lat!=null){(tmp[key(c)]=tmp[key(c)]||[]).push(c)}});
+ for(const k in tmp)byK[k]={lat:tmp[k].reduce((a,x)=>a+x.lat,0)/tmp[k].length,lng:tmp[k].reduce((a,x)=>a+x.lng,0)/tmp[k].length};
+ const cp=c=>c.lat!=null?{lat:c.lat,lng:c.lng}:(byK[key(c)]||null);
+ const nn=(arr,start,pf)=>{arr=arr.slice();const o=[];let cur=start;while(arr.length){let b=0,bd=1e18;arr.forEach((x,i)=>{const p=pf(x),d=cur&&p?dist(cur,p):(p?5e8:1e9);if(d<bd){bd=d;b=i}});const x=arr.splice(b,1)[0];o.push(x);const p=pf(x);if(p)cur=p}return o};
+ const A=cand.filter(c=>c.ag&&c.ag<=h).sort((a,b)=>cmp(a.ag,b.ag)),R=cand.filter(c=>!(c.ag&&c.ag<=h)),G={};
+ R.forEach(c=>{(G[key(c)]=G[key(c)]||[]).push(c)});
+ const gs=Object.keys(G).map(k=>{const m=G[k],ps=m.map(cp).filter(Boolean);return{m,p:ps.length?{lat:ps.reduce((a,x)=>a+x.lat,0)/ps.length,lng:ps.reduce((a,x)=>a+x.lng,0)/ps.length}:null}});
+ let cur=pos;const order=[];SO={};CL={};
+ A.forEach(c=>{SO[c.id]=order.push(c)-1;CL[c.id]='Agendados para hoy';const p=cp(c);if(p)cur=p});
+ nn(gs,cur,g=>g.p).forEach(g=>{
+  const lab=(g.m[0].zona||'Sin zona')+' · '+(pa(g.m[0].dir).calle||'Sin calle');
+  const mm=g.m.some(cp)?nn(g.m.slice().sort((a,b)=>cmp(pa(a.dir).num||'',pa(b.dir).num||'')),cur,cp):g.m.slice().sort((a,b)=>cmp(pa(a.dir).num||'',pa(b.dir).num||''));
+  mm.forEach(c=>{SO[c.id]=order.push(c)-1;CL[c.id]=lab});if(g.p)cur=g.p});
+ window.RUTA=order;O='intel';F='ruta';$('ord').value='intel';render();
+ msg(order.length+' clientes ordenados'+(pos?' desde donde estás.':'. Activá la ubicación para ordenar desde tu posición.'))}
+function rutaBar(){return`<div class="card"><b>Ruta sugerida: ${(window.RUTA||[]).length} clientes</b><br><small style="text-align:left">Primero los agendados de hoy y después las calles más cercanas entre sí. El ~ indica ubicación aproximada.</small><div class="row"><button class="ac" onclick="rutaGM()">🗺️ Abrir primeras 9 paradas en Google Maps</button></div></div>`}
+function rutaGM(){const s=(window.RUTA||[]).slice(0,9).map(c=>c.lat!=null?c.lat+','+c.lng:c.dir+', '+(c.zona||'')+', San Martín, Mendoza');if(!s.length)return;const d=s.pop();window.open('https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+encodeURIComponent(d)+(s.length?'&waypoints='+encodeURIComponent(s.join('|')):''))}
+/* Cola de WhatsApp: abre un chat tras otro con el mensaje escrito. Cada mensaje lo enviás vos. */
+let Q2=[],QI=0;
+function colaOpen(){
+ const l=(window.VIS||[]).filter(c=>waOf(c)&&c.rec!=='no'&&c.wsp!==hoy());
+ if(!l.length)return msg('No hay clientes para la cola con este filtro (sin celular, ya escritos hoy o que no quieren volver a comprar).');
+ Q2=l.slice(0,30);QI=0;
+ if(l.length>30)msg('Son '+l.length+'. Armé una tanda de 30 para cuidar tu número; después podés repetir.');
+ colaDraw()}
+function colaDraw(){const w=$('wm'),c=Q2[QI];w.hidden=false;
+ if(!c){w.innerHTML='<h2>Cola terminada ✓</h2><p>Abriste '+QI+' chats. Los que respondan, marcalos en cada cliente.</p><div class="bar2"><button onclick="$(\'wm\').hidden=true;render()">Cerrar</button></div>';return}
+ WC=c;
+ w.innerHTML=`<h2>Cola de WhatsApp · ${QI+1} de ${Q2.length}</h2><div class="card"><b>${esc(c.n)||'Sin nombre'}</b><br>${esc(c.dir)}${c.zona?' · '+esc(c.zona):''}</div><pre class="pv">${esc(wtext(0))}</pre><small>Se abre WhatsApp con el mensaje escrito. Apretá enviar y volvé a esta app para el siguiente.</small><div class="bar2"><button onclick="colaSend()">Abrir chat y seguir</button><button class="g" onclick="QI++;colaDraw()">Saltear</button><button class="g" onclick="$('wm').hidden=true;render()">Parar</button></div>`}
+function colaSend(){const c=Q2[QI];if(!c)return;WC=c;const t=wtext(0),u=waOf(c);c.wsp=hoy();save();QI++;window.open(u+'?text='+encodeURIComponent(t),'_blank');setTimeout(colaDraw,500)}
+/* Números compartidos: si varios clientes tienen el mismo celular, solo uno recibe el WhatsApp (el de compra más reciente, o el que elijas) */
+const n10=t=>{const d=String(t).replace(/\D/g,'').replace(/^0+/,'');return d.length>10?d.slice(-10):d};
+const ucK=c=>c.uc?String(1e8-parseInt(c.uc.replace(/-/g,''))).padStart(9,'0'):'';
+function owners(){const g={},o={};
+ C.forEach(c=>(c.tel||[]).forEach(t=>{const k=n10(t);if(k.length>=8)(g[k]=g[k]||[]).push(c)}));
+ for(const k in g){const m=g[k].filter((c,i,a)=>a.indexOf(c)===i);if(m.length<2)continue;
+  const pick=m.find(c=>c.wown===k)||m.slice().sort((a,b)=>cmp(ucK(a),ucK(b)))[0];o[k]={own:pick.id,all:m}}
+ return o}
+const own=()=>OW||(OW=owners());
+function waOf(c){const o=own();for(const t of c.tel||[]){const k=n10(t);if(o[k]&&o[k].own!==c.id)continue;const d=String(t).replace(/\D/g,'').replace(/^0+/,'');if(d.length===10)return'https://wa.me/549'+d}return''}
+function shared(c){const o=own(),r=[];for(const t of c.tel||[]){const g=o[n10(t)];if(g&&g.own!==c.id)r.push(g.all.find(x=>x.id===g.own))}return r}
+function sharedNote(c){const o=own();let h='';
+ for(const t of c.tel||[]){const g=o[n10(t)];if(!g)continue;
+  const otros=g.all.filter(x=>x.id!==c.id).map(x=>esc(x.n.split(' ').slice(0,2).join(' '))+(g.own===x.id&&x.wsp?' (ya le escribiste '+fd(x.wsp)+')':'')),ow=g.all.find(x=>x.id===g.own);
+  h+=`<br><small style="text-align:left">📵 ${g.own===c.id?'Número compartido con':'Comparte número con'} ${otros.join(', ')}. Los mensajes van a ${g.own===c.id?'este cliente':esc(ow.n.split(' ')[0])}.</small>`}
+ return h}
+function takeNum(id){const c=C.find(x=>x.id===id),o=own();
+ for(const t of c.tel||[]){const k=n10(t),g=o[k];if(g&&g.own!==c.id){g.all.forEach(x=>{if(x.wown===k)x.wown=''});c.wown=k;break}}
+ save();render();msg('Ahora los mensajes de ese número van a este cliente')}
+/* ===== Mapa dentro de la app, casas tocables y estado de cada cliente ===== */
+const STC={verde:'#2e9e5b',gris:'#8b92a0',amarillo:'#f2b705',celeste:'#2db7ea',rojo:'#d93a3a',morado:'#8e44ad'};
+function stat(c){
+ if(c.mor)return{k:'rojo',t:'Moroso'};if(c.t==='dud')return{k:'morado',t:'Dudoso'};if(c.t==='no')return{k:'gris',t:'No cliente'};
+ const u=c.comp==='si'?cu(c):null;
+ if(u){if(!u.left)return{k:'verde',t:'Terminó de pagar'};return u.left===1?{k:'celeste',t:'Última cuota'}:{k:'amarillo',t:'Pagando · cuota '+(u.paid+1)+'/'+u.total}}
+ if(c.t==='c')return{k:'amarillo',t:'Pagando'};
+ if(c.t==='cn')return{k:'verde',t:'Cancelado'};return{k:'sin',t:'Sin marcar'}}
+const stBadge=c=>{const s=stat(c);if(s.k==='sin')return'';return`<i style="background:${STC[s.k]};color:${s.k==='amarillo'||s.k==='celeste'?'#14213d':'#fff'}">${s.t}</i>`};
+function setT(id,v){const c=C.find(x=>x.id===id);if(c.t===v){c.t=''}else{c.t=v;if(v==='c')c.comp='si'}save();chips();redraw(id)}
+const cardS=c=>card(c).replace('id="c'+c.id+'"','id="s'+c.id+'"');
+function redraw(id){const c=C.find(x=>x.id===id);if(!c)return;for(const p of['c','s']){const el=$(p+id);if(el){const op=el.open;el.outerHTML=p==='c'?card(c):cardS(c);$(p+id).open=op}}}
+let MR=false,PEND=[],HOUSE=null;
+function mapPost(m){const f=$('mf');if(MR&&f&&f.contentWindow)f.contentWindow.postMessage(m,'*');else PEND.push(m)}
+function mapRefresh(){const f=$('mf');if(f&&f.getAttribute('src')&&MR)f.contentWindow.postMessage({t:'refresh'},'*')}
+function tab(t){document.body.classList.toggle('mapa',t==='mapa');$('t1').classList.toggle('on',t!=='mapa');$('t2').classList.toggle('on',t==='mapa');
+ if(t==='mapa'&&!$('mf').getAttribute('src'))$('mf').src='mapa.html';
+ if(t!=='mapa'){$('cs').hidden=true}}
+function goMap(id){tab('mapa');mapPost({t:'goto',id})}
+function closeCs(){$('cs').hidden=true;mapPost({t:'clearsel'})}
+function openCs(ids){const l=ids.map(id=>C.find(x=>x.id===id)).filter(Boolean);if(!l.length)return;
+ $('cs').hidden=false;
+ $('cs').innerHTML='<div class="csh"><b>'+(l.length>1?l.length+' clientes en esta casa':'Cliente')+'</b><button onclick="closeCs()">✕</button></div>'+l.map(cardS).join('');
+ if(l.length===1){const e=$('s'+l[0].id);if(e)e.open=true}}
+function openHouse(m){HOUSE=m;$('cs').hidden=false;
+ $('cs').innerHTML='<div class="csh"><b>Casa seleccionada</b><button onclick="closeCs()">✕</button></div><p>'+(m.found?'Detecté el contorno de la casa.':'No encontré el contorno: voy a marcar un cuadrado en ese punto.')+(m.zona?' Zona: '+esc(m.zona)+'.':'')+'</p><div class="row"><button class="ac" onclick="newAtHouse()">➕ Crear cliente en esta casa</button></div>'}
+function newAtHouse(){const m=HOUSE;if(!m)return;$('cs').hidden=true;
+ P=[{n:'',cod:'',dni:'',dir:'',tel:[],zona:m.zona||'',barrio:'',mz:'',uc:'',dup:false,manual:1,lat:m.lat,lng:m.lng,poly:m.poly,rev:false}];showRev()}
+window.addEventListener('message',e=>{const m=e.data||{};if(!m.t)return;
+ const f=$('mf');if(f&&e.source&&e.source!==f.contentWindow)return;
+ if(m.t==='ready'){MR=true;PEND.splice(0).forEach(mapPost);mapRefresh()}
+ else if(m.t==='client')openCs(m.ids||[]);
+ else if(m.t==='house')openHouse(m)});
+function wa(t){for(const x of t){const d=x.replace(/^0+/,'');if(d.length===10)return'https://wa.me/549'+d}return''}
+function card(c){
+ const b=(k,t,v,neg)=>{const on=v==='hoy'?c[k]:c[k]===v;return`<button class="tg${on?' on':''}${neg?' neg':''}" onclick="set('${c.id}','${k}','${v}')">${t}</button>`};
+ const w=waOf(c),sh=shared(c),est=(v,t)=>`<button class="tg${c.t===v?' on':''}" onclick="setT('${c.id}','${v}')">${t}</button>`;
+ return`<details class="card" id="c${c.id}"><summary><b>${esc(c.n)||'Sin nombre'}</b><span class="sub">${esc(c.dir)}${c.zona?' · '+esc(c.zona):''}</span><span class="bd">${stBadge(c)}${c.vis?'<i>Visitado '+fd(c.vis)+'</i>':''}${c.lla?'<i>Llamado '+fd(c.lla)+'</i>':''}${c.ag?'<i class="'+(c.ag<hoy()?'no':'ok')+'">📅 '+agl(c)+'</i>':''}${pos&&c.lat!=null?'<i>'+kmt(c)+'</i>':''}${c.wsp?'<i>Escribí '+fd(c.wsp)+'</i>':''}${c.wres==='si'?'<i class="ok">Respondió</i>':c.wres==='no'?'<i>No respondió</i>':''}${c.ate==='si'?'<i>Atendió</i>':c.ate==='no'?'<i>No atendió</i>':''}${c.rec==='si'?'<i class="ok">Quiere volver</i>':c.rec==='luego'?'<i>Más adelante</i>':c.rec==='no'?'<i class="no">No quiere</i>':''}${c.comp==='si'?'<i class="ok">Recompró'+(cu(c)?(cu(c).left?' · quedan '+cu(c).left:' · terminó de pagar'):'')+'</i>':''}</span></summary>
+<p>Cód. ${esc(c.cod)}${c.dni?` · DNI <b onclick="this.textContent=this.dataset.d" data-d="${esc(c.dni)}">••••${esc(c.dni.slice(-3))}</b>`:''}${c.uc?' · Última compra '+fdf(c.uc):''}<br>${c.tel.map(esc).join(' · ')||'Sin teléfono'}${sharedNote(c)}</p>
+<div class="row">${c.tel[0]?`<a class="ac" href="tel:${c.tel[0]}">📞 Llamar</a>`:''}${w?`<button class="ac" onclick="wgo('${c.id}')">💬 WhatsApp</button><button class="ac" onclick="wmsg('${c.id}')">✏️ Mensajes</button>`:''}${!w&&sh.length?`<button class="ac" onclick="takeNum('${c.id}')">📵 Comparte número con ${esc(sh[0].n.split(' ')[0])}: usar para este</button>`:''}<a class="ac" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir+', '+(c.zona||'')+', San Martín, Mendoza')}">📍 Mapa</a><button class="ac" onclick="setloc('${c.id}')">${c.gq==='gps'||c.gq==='casa'?'📍 Ubicado ✓':'📍 Ubicar acá'}</button><button class="ac" onclick="goMap('${c.id}')">🗺️ Ver en mapa</button></div>
+<div class="row"><span>Estado</span>${est('cn','Cancelado')}${est('c','Pagando')}${est('dud','Dudoso')}${est('no','No cliente')}</div>
+<div class="row"><span>Moroso</span>${b('mor','Sí','1',1)}${b('mor','No','')}</div>
+<div class="row"><span>Agendar</span><button class="tg" onclick="agset('${c.id}',0)">Hoy</button><button class="tg" onclick="agset('${c.id}',1)">Mañana</button><button class="tg" onclick="agset('${c.id}','sab')">Sábado</button></div>
+<div class="row"><input type="date" value="${esc(c.ag)}" style="flex:1" onchange="agset('${c.id}',this.value)"><select style="width:110px" onchange="set('${c.id}','agt',this.value,1)"><option value="visita"${c.agt!=='llamada'?' selected':''}>Visita</option><option value="llamada"${c.agt==='llamada'?' selected':''}>Llamada</option></select>${c.ag?`<button class="tg" onclick="agset('${c.id}','')">Quitar</button>`:''}</div>
+<div class="row"><span>Visité</span>${b('vis','Sí, hoy','hoy')}${b('vis','No','')}</div>
+<div class="row"><span>Llamé</span>${b('lla','Sí, hoy','hoy')}${b('lla','No','')}</div>
+<div class="row"><span>Le escribí</span>${b('wsp','Sí, hoy','hoy')}${b('wsp','No','')}</div>
+<div class="row"><span>Respondió</span>${b('wres','Sí','si')}${b('wres','No','no',1)}</div>
+<div class="row"><span>Atendió</span>${b('ate','Sí','si')}${b('ate','No','no',1)}</div>
+<div class="row"><span>Volver a comprar</span>${b('rec','Sí','si')}${b('rec','Más adelante','luego')}${b('rec','No','no',1)}</div>
+${recompra(c)}<textarea rows="2" placeholder="Notas (ej: es fiel a otro vendedor, llamar en enero)" onchange="set('${c.id}','nota',this.value,1)">${esc(c.nota)}</textarea>
+<div class="row"><button class="tg" onclick="edit('${c.id}')">Editar datos</button><button class="tg" onclick="del('${c.id}')">Borrar cliente</button></div></details>`}
+/* Recompra: las cuotas que quedan se calculan solas con el calendario (no con pagos reales) */
+const PD=s=>{const[a,b,c]=s.split('-');return new Date(a,b-1,c)};
+function addM(s,n){const[a,b,c]=s.split('-').map(Number),t=new Date(a,b-1+n,1),l=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();return new Date(t.getFullYear(),t.getMonth(),Math.min(c,l))}
+const ds=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+function cu(c){const t=+c.ct;if(!(t>0)||!c.cv)return null;const h=PD(hoy());let paid=0;for(let i=0;i<t;i++)if(addM(c.cv,i)<=h)paid++;return{paid,left:t-paid,total:t,next:paid<t?addM(c.cv,paid):null}}
+function recompra(c){
+ let h=`<div class="row"><span>Volvió a comprar</span><button class="tg${c.comp==='si'?' on':''}" onclick="set('${c.id}','comp','si')">Sí</button><button class="tg${c.comp==='no'?' on neg':''}" onclick="set('${c.id}','comp','no')">No</button></div>`;
+ if(c.comp==='si'){const u=cu(c);
+  h+=`<input placeholder="Qué compró (ej: heladera)" value="${esc(c.cp)}" onchange="set('${c.id}','cp',this.value)"><div class="row"><input type="number" min="1" placeholder="Cuotas" value="${esc(c.ct)}" style="width:110px" onchange="set('${c.id}','ct',this.value)"><input type="date" value="${esc(c.cv)}" style="flex:1" onchange="set('${c.id}','cv',this.value)"></div><small style="text-align:left">Cantidad de cuotas y fecha de la primera (la elige el cliente)</small>`
+  +(u?`<p><b>${u.left?'Quedan '+u.left+' de '+u.total+' cuotas · próxima vence '+ds(u.next):'Terminó de pagar ✓'}</b><br><small style="text-align:left">Se calcula con el calendario, no con pagos reales.</small></p>`:'')}
+ return h}
+/* Mensajes listos para clientes. Ajustalos a tu estilo y a lo que Bianco ofrece. */
+/* Mensaje principal: se puede editar desde la app y queda guardado para todos los clientes */
+const MAINKEY='clientes-msg-principal',MAIN0='Hola {nombre}, Fede de Bianco.\nTenemos nuevas propuestas: freidoras de aire, licuadoras, ventiladores y combos de dormitorio, con primera cuota en enero y sin abono inicial.\nHoy vamos a estar visitando la zona y quería pasar a mostrarte algunas opciones. ¿Qué te parece?';
+const getMain=()=>{try{return localStorage.getItem(MAINKEY)||MAIN0}catch(e){return MAIN0}};
+function editMain(){$('wm').hidden=false;
+ $('wm').innerHTML=`<h2>Mensaje principal</h2><small>Es el que se envía con el botón 💬 y en la cola, para todos los clientes. Escribí <b>{nombre}</b> donde va el nombre del cliente y <b>{saludo}</b> para "buenos días / buenas tardes / buenas noches".</small><textarea id="mt" rows="11">${esc(getMain())}</textarea><div class="bar2"><button onclick="saveMain()">Guardar para todos</button><button class="g" onclick="restoreMain()">Volver al original</button><button class="g" onclick="$('wm').hidden=true">Cancelar</button></div>`}
+function saveMain(){const t=$('mt').value.trim();if(!t)return msg('El mensaje no puede quedar vacío');try{localStorage.setItem(MAINKEY,t)}catch(e){return msg('No se pudo guardar el mensaje')}$('wm').hidden=true;msg('Mensaje principal guardado para todos los clientes')}
+function restoreMain(){try{localStorage.removeItem(MAINKEY)}catch(e){}$('mt').value=MAIN0;msg('Texto original restaurado. Tocá Guardar para usarlo.')}
+const MSG=[
+['Mensaje principal (el que se envía con 💬)',''],
+['Anterior (¿te encontrás en tu domicilio?)','Hola, {s}{n}! Soy Fede, de Bianco. Como ya compraste con nosotros, quería avisarte que ingresaron nuevas promociones y productos. Andamos por tu zona y nos encantaría pasar a mostrártelos. ¿Te encontrás en tu domicilio? 😊'],
+['Visita con elección de horario','Hola, {s}{n}! Soy Fede, de Bianco. Como ya compraste con nosotros, quería avisarte que ingresaron nuevas promociones y productos. Andamos por tu zona y nos encantaría pasar a mostrártelos. ¿Te queda mejor por la mañana o por la tarde? Sin compromiso 😊'],
+['Cómo te fue con tu compra','Hola, {s}{n}! Soy Fede, de Bianco. Me acordé de vos porque ya terminaste de pagar tu compra con nosotros. ¿Cómo te fue con todo? Si te interesa, tengo novedades para contarte, sin compromiso.'],
+['Retomar un "más adelante"','Hola, {s}{n}! Soy Fede, de Bianco. La otra vez quedamos en hablar más adelante, así que te escribo para ver si ahora te queda mejor. Si no es el momento, no hay problema, avisame y lo vemos cuando quieras.'],
+['Pedir recomendados','Hola, {s}{n}! Soy Fede, de Bianco. Gracias por haber confiado en nosotros. Si algún familiar o vecino está buscando algo para el hogar, ¿me pasás su contacto? Lo atiendo con gusto.'],
+['Segundo mensaje (no respondió)','Hola{n}, te escribí hace unos días. No quiero molestarte: si más adelante te interesa, acá estoy. ¡Que tengas muy lindo día!'],
+['Escribir libre','Hola, {s}{n}! Soy Fede, de Bianco. ']];
+let WC=null;
+const sal=()=>{const h=new Date().getHours();return h<12?'buenos días':h<20?'buenas tardes':'buenas noches'};
+function wtext(i){const c=WC,f=(c.n||'').split(' ')[0],nm=f?f.charAt(0).toUpperCase()+f.slice(1).toLowerCase():'';
+ const t=(i===0?getMain():MSG[i][1]).replace(/\{saludo\}|\{s\}/g,sal()).replace(/\{nombre\}/g,nm).replace(/\{n\}/g,nm?' '+nm:'');
+ return t.replace(/Hola\s*,/g,'Hola,').replace(/[ \t]{2,}/g,' ').replace(/ ([,.!?])/g,'$1')}
+/* Un toque: abre el chat del cliente con el mensaje ya escrito para solo apretar enviar */
+function wgo(id){const c=C.find(x=>x.id===id),u=waOf(c);if(!u){const sh=shared(c);return msg(sh.length?'Este número es compartido: los mensajes van a '+sh[0].n.split(' ')[0]+'. Si querés cambiarlo, tocá "usar para este".':'Este cliente no tiene un celular válido.')}
+ if(c.rec==='no'&&!confirm('Marcaste que este cliente no quiere volver a comprar. ¿Escribirle igual?'))return;
+ WC=c;const t=wtext(0);c.wsp=hoy();save();render();window.open(u+'?text='+encodeURIComponent(t),'_blank')}
+function wmsg(id){
+ WC=C.find(x=>x.id===id);
+ $('wm').hidden=false;
+ $('wm').innerHTML=`<h2>Mensaje para ${esc(WC.n)||'el cliente'}</h2>${WC.rec==='no'?'<div class="card dup"><b>Ojo:</b> marcaste que este cliente no quiere volver a comprar. Si pidió que no lo contacten, respetalo.</div>':''}
+<select id="ws" onchange="$('wt').value=wtext(+this.value)">${MSG.map((m,i)=>`<option value="${i}">${esc(m[0])}</option>`).join('')}</select>
+<textarea id="wt" rows="8"></textarea><small>Podés editar el texto antes de enviar.</small><div class="row"><button class="ac" onclick="editMain()">✏️ Editar el mensaje principal (para todos)</button></div>
+<div class="bar2"><button onclick="wsend()">Abrir WhatsApp</button><button class="g" onclick="wcopy()">Copiar</button><button class="g" onclick="$('wm').hidden=true">Cerrar</button></div>`;
+ $('wt').value=wtext(0)}
+function wsend(){const u=waOf(WC);if(!u)return msg('Este cliente no tiene un celular válido.');WC.wsp=hoy();save();render();window.open(u+'?text='+encodeURIComponent($('wt').value))}
+function wcopy(){const t=$('wt').value;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>msg('Mensaje copiado')).catch(()=>{$('wt').select();msg('Seleccioné el texto: copialo manualmente')})}
+function set(id,k,v,quiet){
+ const c=C.find(x=>x.id===id);
+ c[k]=v==='hoy'?hoy():['ate','rec','wres','comp'].includes(k)&&c[k]===v?'':v;
+ if((k==='vis'||k==='lla')&&c[k]===hoy()&&c.ag&&c.ag<=hoy())c.ag='';
+ save();chips();if(quiet)return;
+ redraw(id)}
+function edit(id){const c=C.find(x=>x.id===id);P=[{...c,dni:c.dni||'',barrio:B(c),mz:M(c),dup:false,editId:id}];showRev()}
+function del(id){if(confirm('¿Borrar este cliente?')){C=C.filter(x=>x.id!==id);save();render()}}
+function delAll(){if(confirm('¿Borrar TODA la lista? Esto no se puede deshacer.')){C=[];save();render()}}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(C)],{type:'application/json'}));a.download='clientes-cancelados-'+hoy()+'.json';a.click()}
+$('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d))throw 0;if(confirm('Esto reemplaza tu lista actual. ¿Seguir?')){C=d;save();render()}}catch(x){msg('El archivo no es una copia válida')}};r.readAsText(f)};
+$('f').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)run(fs)};
+$('q').oninput=e=>{Q=e.target.value;render()};
+$('ord').onchange=e=>{O=e.target.value;render()};
+$('zsel').onchange=e=>{Z=e.target.value;render()};
+render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
